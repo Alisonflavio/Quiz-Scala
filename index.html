@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diagnóstico de Carreira | Scala Fitness</title>
+<style>
+  :root{
+    --bg:#15110E; --bg2:#211A16; --line:#3A2E27; --txt:#FFFFFF; --mute:#A79E97; --acc:#FF6432; --acc2:#FF8659; --ok:#3DDC97; --cream:#E5D6CC;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:radial-gradient(1100px 550px at 50% -8%, rgba(255,100,50,.14), transparent 62%), var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+  body{min-height:100vh;display:flex;justify-content:center}
+  .app{width:100%;max-width:560px;padding:20px 20px 60px}
+  .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  .brand img{height:26px;display:block}
+  .step-count{font-size:13px;color:var(--mute)}
+  .intro-logo{display:block;height:64px;margin:4px auto 28px}
+  .bar{height:4px;background:var(--line);border-radius:4px;overflow:hidden;margin-bottom:34px}
+  .bar i{display:block;height:100%;width:0;background:var(--acc);transition:width .35s ease}
+  .screen{animation:in .35s ease}
+  @keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  h1{font-size:30px;line-height:1.15;font-weight:800;margin-bottom:14px}
+  h1 em{font-style:normal;color:var(--acc)}
+  h2{font-size:24px;line-height:1.2;font-weight:800;margin-bottom:8px}
+  .sub{color:var(--mute);font-size:16px;line-height:1.5;margin-bottom:26px}
+  .sub b{color:#fff;font-weight:800}
+  .opts{display:grid;gap:10px}
+  .opt{background:var(--bg2);border:1.5px solid var(--line);color:var(--txt);border-radius:14px;padding:17px 18px;font-size:16px;text-align:left;cursor:pointer;transition:.15s;font-family:inherit;width:100%}
+  .opt:hover,.opt:focus-visible{border-color:var(--acc);outline:none}
+  .opt.sel{border-color:var(--acc);background:rgba(255,77,42,.12)}
+  .opt small{display:block;color:var(--mute);font-size:13px;margin-top:3px}
+  input[type=text],input[type=tel]{width:100%;background:var(--bg2);border:1.5px solid var(--line);color:var(--txt);border-radius:14px;padding:17px 18px;font-size:17px;font-family:inherit;margin-bottom:14px}
+  input:focus{outline:none;border-color:var(--acc)}
+  .btn{display:block;width:100%;background:var(--acc);color:#fff;border:0;border-radius:14px;padding:18px;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;text-align:center;text-decoration:none;transition:.15s}
+  .btn:hover{background:var(--acc2)}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .back{background:none;border:0;color:var(--mute);font-size:14px;margin-top:16px;cursor:pointer;font-family:inherit}
+  .err{color:var(--acc2);font-size:14px;margin:-6px 0 12px;min-height:18px}
+  .hint{color:var(--mute);font-size:13px;margin-top:12px;line-height:1.4}
+
+  /* loading */
+  .loader{text-align:center;padding:60px 0}
+  .ring{width:64px;height:64px;border-radius:50%;border:5px solid var(--line);border-top-color:var(--acc);margin:0 auto 26px;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .lstep{color:var(--mute);font-size:16px;min-height:24px}
+
+  /* result */
+  .tag{display:inline-block;background:rgba(255,77,42,.15);color:var(--acc);border:1px solid rgba(255,77,42,.4);border-radius:99px;padding:6px 12px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px}
+  .card{background:var(--bg2);border:1px solid var(--line);border-radius:18px;padding:22px;margin-bottom:16px}
+  .card h3{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin-bottom:12px;font-weight:700}
+  .nums{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:6px}
+  .num{background:var(--bg);border-radius:12px;padding:14px}
+  .num span{display:block;font-size:12px;color:var(--mute);margin-bottom:4px}
+  .num b{font-size:23px;font-weight:800}
+  .num.hi b{color:var(--acc)}
+  .gap{font-size:15.5px;line-height:1.6;color:#EFE9E5;margin-top:14px}
+  .gap b{color:#fff;font-weight:800}
+  .gauge{height:12px;background:var(--bg);border-radius:8px;overflow:hidden;margin:6px 0 10px}
+  .gauge i{display:block;height:100%;background:linear-gradient(90deg,var(--ok),#FFC24A,var(--acc));width:0;transition:width 1s ease}
+  .gauge.mini{height:8px;margin:10px 0 8px}
+  .stat-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:10px;margin-top:16px}
+  .stat{background:var(--bg);border-radius:12px;padding:14px 8px;text-align:center}
+  .stat b{display:block;font-size:21px;font-weight:800;color:#fff}
+  .stat.hi{border:1.5px solid var(--acc)}
+  .stat.hi b{color:var(--acc)}
+  .stat span{display:block;font-size:11.5px;color:var(--mute);margin-top:5px;line-height:1.35}
+  .lvl{font-size:22px;font-weight:800;margin-bottom:6px}
+  .p{font-size:15px;line-height:1.55;color:#DDE3E9}
+  .pillars{display:grid;gap:10px}
+  .pil{display:flex;gap:12px;align-items:flex-start;background:var(--bg);border:1.5px solid var(--line);border-radius:14px;padding:14px}
+  .pil.pri{border-color:var(--acc);background:rgba(255,77,42,.08)}
+  .pil .n{flex:0 0 28px;height:28px;border-radius:50%;background:var(--line);display:grid;place-items:center;font-weight:800;font-size:14px}
+  .pil.pri .n{background:var(--acc)}
+  .pil b{display:block;font-size:16px;margin-bottom:2px}
+  .pil span{font-size:14px;color:var(--mute);line-height:1.45}
+  .badge{font-size:11px;color:var(--acc);font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-left:6px}
+  .quote{border-left:3px solid var(--acc);padding-left:14px;font-size:18px;font-weight:700;line-height:1.35;margin:22px 0}
+  .cta-box{text-align:center;margin-top:24px}
+  .cta-box p{color:var(--mute);font-size:14px;margin-bottom:14px;line-height:1.5}
+  .disc{color:#6C7784;font-size:11.5px;line-height:1.5;margin-top:22px}
+  .gauge.acc i{background:var(--acc)}
+  .proof{width:100%;border-radius:12px;display:block;border:1px solid var(--line)}
+  .cap{color:var(--mute);font-size:13px;line-height:1.45;margin-top:10px}
+  .vwrap{position:relative;width:100%;max-width:280px;margin:0 auto;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:#000}
+  .vwrap video{display:block;width:100%;aspect-ratio:9/16;object-fit:cover}
+  .vname{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .vname .av{width:38px;height:38px;border-radius:50%;background:var(--line);display:grid;place-items:center;font-weight:800;font-size:15px;color:var(--acc)}
+  .vname b{display:block;font-size:15px}
+  .vname span{font-size:12.5px;color:var(--mute)}
+
+  /* pergunta de confirmação */
+  .confirm{border:2px solid var(--acc);background:rgba(255,77,42,.08);border-radius:20px;padding:24px 20px;margin:26px 0 8px;text-align:center;animation:pulse 2.2s ease-out 2}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,77,42,.45)}100%{box-shadow:0 0 0 18px rgba(255,77,42,0)}}
+  .confirm h2{font-size:24px;margin-bottom:8px}
+  .confirm .sub{margin-bottom:18px}
+  .confirm.ok{border-color:var(--ok);background:rgba(61,220,151,.08);animation:none;text-align:left}
+  .confirm.ok h2{color:var(--ok)}
+  .confirm.ok .sub{margin-bottom:0}
+  .yn{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .ynb{border:0;border-radius:14px;min-height:64px;font-size:21px;font-weight:800;cursor:pointer;font-family:inherit;color:#fff;transition:.15s}
+  .ynb.no{background:#D93636}.ynb.no:hover{background:#E85050}
+  .ynb.yes{background:#2FBF71;color:#06210F}.ynb.yes:hover{background:#43D283}
+  .fl{display:block;text-align:left;font-size:13px;color:var(--mute);margin-bottom:12px}
+  .fl select{display:block;width:100%;margin-top:6px;background:var(--bg2);border:1.5px solid var(--line);color:var(--txt);border-radius:12px;padding:14px;font-size:16px;font-family:inherit}
+  pre.dbg{background:#0E1216;color:#7EE2B8;font-size:11px;padding:12px;border-radius:10px;overflow:auto;margin-top:20px;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="brand"><img src="brand/logo-horizontal-cream.svg" alt="Mentoria Scala Fitness"></div>
+    <div class="step-count" id="count"></div>
+  </div>
+  <div class="bar"><i id="prog"></i></div>
+  <div id="stage"></div>
+</div>
+
+<script>
+/* ========= CONFIG ========= */
+const WHATSAPP_NUMBER = "5500000000000";   // TROCAR pelo número real (DDI+DDD+número)
+const WEBHOOK_URL = "";                    // URL do webhook do Make (deixe vazio para só testar)
+const META_PIXEL_ID = "";                  // ID do pixel da Meta (deixe vazio para desligar)
+const DEBUG = new URLSearchParams(location.search).has("debug");
+
+/* ========= RASTREAMENTO ========= */
+const LEAD_ID = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2);
+const tracking = {};
+(function(){
+  const qs = new URLSearchParams(location.search);
+  ["utm_source","utm_medium","utm_campaign","utm_content","utm_term","fbclid"].forEach(k=>{
+    let v = qs.get(k);
+    try{ if(v) sessionStorage.setItem(k,v); else v = sessionStorage.getItem(k); }catch(e){}
+    if(v) tracking[k] = v;
+  });
+})();
+if(META_PIXEL_ID){
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', META_PIXEL_ID); fbq('track','PageView');
+}
+const track = (ev, custom) => { if(window.fbq) fbq(custom ? 'trackCustom' : 'track', ev); };
+
+/* ========= PERGUNTAS ========= */
+const steps = [
+  { id:"intro", type:"intro" },
+  { id:"nome", type:"text", q:"Como podemos te chamar?", sub:"Seu primeiro nome já basta.", ph:"Seu nome" },
+  { id:"whats", type:"tel", q:"Qual seu WhatsApp?", sub:"É para onde enviamos o seu diagnóstico completo.", ph:"(11) 99999-9999", hint:"Usamos seus dados só para gerar esse diagnóstico e para nosso time entrar em contato com você." },
+  { id:"email", type:"text", q:"Qual seu e-mail?", sub:"Só para garantir que o diagnóstico chegue até você.", ph:"seu@email.com" },
+  { id:"area", type:"text", q:"Qual sua área de atuação?", sub:"Ex.: personal trainer, educador físico, treinador esportivo.", ph:"Sua área de atuação" },
+  { id:"renda", type:"choice", q:"Qual é a sua renda mensal média atual?", sub:"Some presencial e online. Uma estimativa serve.",
+    opts:[ {l:"Menos de R$ 3.000", v:2000}, {l:"Entre R$ 3.000 e R$ 6.000", v:4500}, {l:"Entre R$ 6.000 e R$ 10.000", v:8000}, {l:"Acima de R$ 10.000", v:14000} ] },
+  { id:"meta", type:"choice", q:"Quanto você gostaria de faturar mensalmente nos próximos 12 meses?", sub:"Sem falsa modéstia. Qual número mudaria sua vida?",
+    opts:[ {l:"Até R$ 5.000", v:4000}, {l:"Entre R$ 5.000 e R$ 10.000", v:7500}, {l:"Entre R$ 10.000 e R$ 20.000", v:15000}, {l:"Acima de R$ 20.000", v:25000} ] },
+  { id:"horas", type:"choice", q:"Quantas horas por semana você passa atendendo?", sub:"Só o tempo com aluno, sem contar deslocamento.",
+    opts:[ {l:"Menos de 20 horas", v:15, pts:0}, {l:"20 a 35 horas", v:28, pts:1}, {l:"35 a 50 horas", v:43, pts:2}, {l:"Mais de 50 horas", v:55, pts:3} ] },
+  { id:"objetivo", type:"choice", q:"Qual é o maior objetivo que você deseja alcançar nos próximos 12 meses?", sub:"Uma resposta. A mais importante.",
+    opts:[ {l:"Aumentar a renda online", v:"renda_online"},
+           {l:"Dobrar e/ou aumentar o número de clientes", v:"dobrar_clientes"},
+           {l:"Criar um produto digital lucrativo", v:"produto_digital"},
+           {l:"Ampliar minha presença nas redes sociais", v:"presenca_redes"} ] },
+  { id:"insta", type:"text", q:"Qual seu endereço @ na plataforma que mais usa?", sub:"Instagram, TikTok ou outra. Nosso time olha o seu perfil na análise.", ph:"@seuperfil" },
+  { id:"loading", type:"loading" },
+  { id:"result", type:"result" }
+];
+
+const answers = {};
+let idx = 0;
+
+/* ========= HELPERS ========= */
+const $ = s => document.querySelector(s);
+const brl = n => "R$ " + Math.round(n).toLocaleString("pt-BR");
+const labelOf = (id, v) => (steps.find(s=>s.id===id).opts.find(o=>o.v===v)||{}).l;
+
+function setProgress(){
+  const total = steps.length - 3;               // sem intro, loading, result
+  const done = Math.max(0, Math.min(idx-1, total));
+  $("#prog").style.width = (done/total*100)+"%";
+  const s = steps[idx];
+  $("#count").textContent = (s.type==="intro"||s.type==="loading"||s.type==="result") ? "" : `${idx} de ${total}`;
+}
+
+function render(){
+  setProgress();
+  const s = steps[idx];
+  const el = $("#stage");
+  el.innerHTML = "";
+  const wrap = document.createElement("div");
+  wrap.className = "screen";
+
+  if(s.type==="intro"){
+    wrap.innerHTML = `
+      <img class="intro-logo" src="brand/logo-vertical-cream.svg" alt="Mentoria Scala Fitness">
+      <h1>Você vende <em>hora</em> ou vende <em>método</em>?</h1>
+      <p class="sub">Responda ${steps.length-3} perguntas rápidas e receba na hora o seu diagnóstico de carreira: onde você está, quanto falta para sua meta e o que precisa mudar primeiro.</p>
+      <button class="btn" id="go">Começar meu diagnóstico</button>
+      <p class="hint">Leva cerca de 2 minutos. Sem senha, sem cadastro longo.</p>`;
+    el.appendChild(wrap);
+    $("#go").onclick = next;
+    return;
+  }
+
+  if(s.type==="text"||s.type==="tel"){
+    wrap.innerHTML = `
+      <h2>${s.q}</h2><p class="sub">${s.sub}</p>
+      <input id="inp" type="${s.type}" placeholder="${s.ph}" value="${answers[s.id]||""}" autocomplete="off">
+      <div class="err" id="err"></div>
+      <button class="btn" id="ok">Continuar</button>
+      <button class="back" id="bk">Voltar</button>
+      ${s.hint ? `<p class="hint">${s.hint}</p>` : ""}`;
+    el.appendChild(wrap);
+    const inp = $("#inp"); inp.focus();
+    const submit = ()=>{
+      const v = inp.value.trim();
+      const e = validate(s.id, v);
+      if(e){ $("#err").textContent = e; return; }
+      answers[s.id] = s.id==="insta" ? normalizeInsta(v) : v;
+      if(s.id==="whats"){ sendLead("captura"); track("QuizCaptura", true); }   // guarda o lead mesmo que ele abandone o quiz
+      next();
+    };
+    $("#ok").onclick = submit;
+    inp.onkeydown = ev => { if(ev.key==="Enter") submit(); };
+    $("#bk").onclick = prev;
+    return;
+  }
+
+  if(s.type==="choice"){
+    wrap.innerHTML = `<h2>${s.q}</h2><p class="sub">${s.sub}</p><div class="opts" id="opts"></div><button class="back" id="bk">Voltar</button>`;
+    el.appendChild(wrap);
+    const box = $("#opts");
+    s.opts.forEach(o=>{
+      const b = document.createElement("button");
+      b.className = "opt" + (answers[s.id]===o.v ? " sel":"");
+      b.innerHTML = o.l + (o.s ? `<small>${o.s}</small>`:"");
+      b.onclick = ()=>{ answers[s.id]=o.v; b.classList.add("sel"); setTimeout(next,180); };
+      box.appendChild(b);
+    });
+    $("#bk").onclick = prev;
+    return;
+  }
+
+  if(s.type==="loading"){
+    wrap.innerHTML = `<div class="loader"><div class="ring"></div><h2>Montando seu diagnóstico</h2><p class="lstep" id="ls"></p></div>`;
+    el.appendChild(wrap);
+    const msgs = [`Lendo as respostas de ${answers.nome}...`, "Calculando quanto vale a sua hora...", "Medindo o tamanho da sua Prisão da Hora...", "Definindo por qual pilar começar..."];
+    let i=0; $("#ls").textContent = msgs[0];
+    const t = setInterval(()=>{ i++; if(i<msgs.length) $("#ls").textContent = msgs[i]; },900);
+    setTimeout(()=>{ clearInterval(t); next(); }, 3800);
+    return;
+  }
+
+  if(s.type==="result"){
+    el.appendChild(wrap); renderResult(wrap);
+    window.scrollTo({top:0});
+  }
+}
+
+function validate(id, v){
+  if(id==="nome" && v.length<2) return "Digite seu nome.";
+  if(id==="whats"){ const d=v.replace(/\D/g,""); if(d.length<10||d.length>13) return "Digite um WhatsApp válido com DDD."; }
+  if(id==="email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return "Digite um e-mail válido.";
+  if(id==="area"){
+    const low = v.trim().toLowerCase();
+    if(low.length<3 || ["teste","test","x","n/a","na","-","..."].includes(low)) return "Conte pra gente sua área de atuação de verdade.";
+  }
+  if(id==="insta" && v.replace("@","").length<2) return "Digite seu @.";
+  return "";
+}
+function normalizeInsta(v){ return "@"+v.replace(/^@/,"").replace(/^https?:\/\/(www\.)?instagram\.com\//,"").replace(/\/$/,""); }
+function next(){ if(idx<steps.length-1){ idx++; render(); } }
+function prev(){ if(idx>1){ idx--; render(); } }
+
+/* ========= LÓGICA DO RESULTADO ========= */
+const LEVELS = [
+  { min:3, name:"Preso na Hora", txt:"Sua renda depende diretamente das horas que você trabalha. <b>Se você para, o dinheiro para.</b> Esse é o estágio mais comum e o mais cansativo, porque o único jeito de ganhar mais é trabalhar mais." },
+  { min:2, name:"Agenda Cheia, Carreira Parada", txt:"Você já tem demanda, mas <b>a agenda virou o teto da sua renda.</b> O que falta não é mais aluno, é uma estrutura que não dependa das suas horas." },
+  { min:1, name:"Perto do Degrau", txt:"Você já saiu da armadilha mais pesada. <b>Falta processo:</b> oferta clara, conteúdo com intenção e uma venda previsível pra virar faturamento estável." },
+  { min:0, name:"Pronto para Escalar", txt:"Seu faturamento já não depende só de horas. <b>O próximo passo é previsibilidade e alcance</b>, com posicionamento forte e um processo de vendas que rode todo mês." }
+];
+const PILLARS = [
+  { key:"pos", n:"Posicionamento", d:"Ser percebido como referência, e não como mais um treinador com preço de hora." },
+  { key:"con", n:"Conteúdo", d:"Gerar atenção e engajamento com intenção, para deixar de ser invisível." },
+  { key:"ven", n:"Vendas", d:"Transformar audiência em clientes com um processo simples e previsível, no direto." }
+];
+/* Pilar prioritário e texto da "trava" derivados do objetivo (não perguntamos a trava separadamente, pra manter o quiz curto) */
+const OBJETIVOS = {
+  renda_online:    { label:"aumentar sua renda com atendimento online", pri:"ven", txt:"Aumentar a renda com atendimento online exige um processo de vendas recorrente, não picos isolados. O primeiro degrau é um roteiro de venda simples que você aplica todo mês." },
+  dobrar_clientes: { label:"dobrar ou aumentar o número de clientes", pri:"pos", txt:"Dobrar ou aumentar clientes sem depender de sorte começa no posicionamento: ser tão claro sobre quem você ajuda que o cliente te procura, em vez de esperar indicação." },
+  produto_digital: { label:"criar um produto digital lucrativo", pri:"ven", txt:"Criar um produto digital lucrativo só funciona com um processo de vendas que sustente as vendas todo mês, não só no lançamento. O primeiro degrau é montar esse processo." },
+  presenca_redes:  { label:"ampliar sua presença nas redes sociais", pri:"con", txt:"Quem não é visto, não é lembrado. O primeiro degrau é conteúdo com intenção, que te coloque na cabeça do cliente certo." }
+};
+const TICKET_ONLINE = 150;   // ticket de referência da consultoria online recorrente (vendas da comunidade: R$ 137 a R$ 187 de ganho por venda)
+const UM_POR_CENTO = 23517;  // referência do criativo: "1% que fatura mais de R$ 23.517/mês com consultoria online"
+const FIELD_LABEL = { renda:"Quanto você fatura por mês hoje", meta:"Quanto você quer faturar por mês", horas:"Horas por semana atendendo" };
+let resultSent = false;
+
+function compute(){
+  const a = answers;
+  const score = steps.find(s=>s.id==="horas").opts.find(o=>o.v===a.horas).pts;  // 0 a 3, quanto mais horas, mais "presa" a renda está
+  const level = LEVELS.find(l=>score>=l.min);
+  const gap = Math.max(0, a.meta - a.renda);
+  const hourMonth = a.horas * 4.3;
+  const rateHour = a.renda / hourMonth;                    // valor efetivo da hora
+  const hoursNeeded = a.horas * a.meta / a.renda;          // horas/semana p/ bater a meta vendendo hora
+  const fits = hoursNeeded <= 60;
+  // temperatura do lead p/ o closer
+  let hot = 0;
+  if(a.renda>=4500) hot++; if(a.meta>=15000) hot++; if(a.horas>=28) hot++;
+  if(a.insta && a.insta.length>3) hot++;
+  const temp = hot>=4 ? "quente" : hot>=3 ? "morno" : "frio";
+  return { score, level, gap, rateHour, hoursNeeded, fits, pct:Math.round(score/3*100), temp };
+}
+
+function renderResult(wrap){
+  const a = answers, r = compute();
+  const tv = OBJETIVOS[a.objetivo];
+  const priKey = tv.pri;
+  const alunos = Math.ceil(r.gap / TICKET_ONLINE);
+  const pct1 = Math.min(100, Math.round(a.renda / UM_POR_CENTO * 100));
+
+  let horaTxt;
+  if(a.meta <= a.renda){
+    horaTxt = `Sua meta está no mesmo patamar da sua renda atual. O ponto agora não é faturar mais, é <b>faturar isso com menos horas e mais previsibilidade</b>.`;
+  } else if(r.fits){
+    horaTxt = `Hoje cada hora sua vale em média <b>${brl(r.rateHour)}</b>. Para chegar em ${brl(a.meta)} vendendo hora, você precisaria de cerca de <b>${Math.round(r.hoursNeeded)} horas por semana</b> atendendo, ${Math.round(r.hoursNeeded - a.horas)} a mais do que hoje.`;
+  } else {
+    horaTxt = `Hoje cada hora sua vale em média <b>${brl(r.rateHour)}</b>. Para chegar em ${brl(a.meta)} vendendo hora, você precisaria de cerca de <b>${Math.round(r.hoursNeeded)} horas por semana</b>. Isso não cabe na semana. O problema não é esforço, é o modelo.`;
+  }
+
+  const pil = PILLARS.map((p,i)=>`
+    <div class="pil ${p.key===priKey?'pri':''}">
+      <div class="n">${i+1}</div>
+      <div><b>${p.n}${p.key===priKey?'<span class="badge">Comece por aqui</span>':''}</b><span>${p.d}</span></div>
+    </div>`).join("");
+
+  const msg = `Oi! Fiz o diagnóstico da Scala Fitness e confirmei o resultado. Sou ${a.nome} (${a.insta}), meu nível deu "${r.level.name}" e minha meta é ${brl(a.meta)}/mês. Quero falar com um gestor de carreira.`;
+  const wa = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
+
+  wrap.innerHTML = `
+    <span class="tag">Diagnóstico de ${a.nome}</span>
+    <h1>Seu nível: <em>${r.level.name}</em></h1>
+    <p class="sub">${r.level.txt}</p>
+
+    <div class="card">
+      <h3>Sua Prisão da Hora</h3>
+      <div class="gauge"><i id="gg"></i></div>
+      <p class="p">Você está em <b>${r.pct}%</b> de dependência das suas horas. Quanto maior o número, mais a sua renda depende de você estar presente atendendo.</p>
+    </div>
+
+    <div class="card">
+      <h3>Onde você está e onde quer chegar</h3>
+      <div class="nums">
+        <div class="num"><span>Hoje</span><b>${brl(a.renda)}/mês</b></div>
+        <div class="num hi"><span>Sua meta</span><b>${brl(a.meta)}/mês</b></div>
+      </div>
+      <p class="gap">${horaTxt}</p>
+      <div class="stat-strip">
+        ${r.gap>0 ? `
+        <div class="stat"><b>${brl(r.gap)}</b><span>faltam por mês</span></div>
+        <div class="stat hi"><b>~${alunos}</b><span>alunos online pra fechar essa conta (a ${brl(TICKET_ONLINE)}/mês cada)</span></div>` : ""}
+        <div class="stat"><b>${pct1}%</b><span>do 1% que já fatura ${brl(UM_POR_CENTO)}/mês</span></div>
+      </div>
+      <div class="gauge acc mini"><i id="g1"></i></div>
+    </div>
+
+    <div class="card">
+      <h3>Isso é possível, e quem já fez está aqui pra provar</h3>
+      <div class="vname">
+        <div class="av">RM</div>
+        <div><b>Reinaldo Munekata</b><span>Especialista em treinamento feminino, aluno Scala Fitness</span></div>
+      </div>
+      <div class="vwrap">
+        <video controls preload="metadata" playsinline poster="video/depoimento-reinaldo-poster.jpg">
+          <source src="video/depoimento-reinaldo.mp4" type="video/mp4">
+        </video>
+      </div>
+      <p class="cap">Não é promessa, é gente que já fez. Hoje ele soma 20 alunos presenciais (cerca de R$ 18 mil) e 35 alunos online (cerca de R$ 6.500), previsão de quase <b>R$ 25 mil no mês</b>, unindo presencial e online.</p>
+    </div>
+
+    <div class="card">
+      <h3>Isso já acontece na nossa comunidade</h3>
+      <img class="proof" src="prova-vendas.jpg" alt="Vendas confirmadas de consultoria online recorrente compartilhadas por alunos" loading="lazy">
+      <p class="cap">Vendas confirmadas de consultoria online recorrente, compartilhadas por alunos da comunidade. Nesses exemplos, o ganho foi de R$ 137 a R$ 187 por venda.</p>
+    </div>
+
+    <div class="card">
+      <h3>A sua principal trava</h3>
+      <p class="p">${tv.txt}</p>
+    </div>
+
+    <div class="card">
+      <h3>Seu caminho: os 3 pilares</h3>
+      <div class="pillars">${pil}</div>
+    </div>
+
+    <div class="confirm" id="confirm">
+      <h2>Eu estou correto nessa avaliação?</h2>
+      <p class="sub">Se o diagnóstico acertou, liberamos o seu passo a passo para buscar o resultado.</p>
+      <div class="yn">
+        <button class="ynb no" id="no">Não</button>
+        <button class="ynb yes" id="yes">Sim</button>
+      </div>
+    </div>
+    <div id="after"></div>
+    <p class="disc">Este diagnóstico é uma estimativa baseada nas suas respostas, sem promessa de resultado. Os números mostram o seu ponto de partida, e o resultado depende da sua execução.</p>
+    ${DEBUG ? `<pre class="dbg">${JSON.stringify(buildPayload("completo",r),null,2)}</pre>` : ""}`;
+
+  setTimeout(()=>{ const g=$("#gg"); if(g) g.style.width = r.pct+"%"; const g1=$("#g1"); if(g1) g1.style.width = pct1+"%"; }, 100);
+  $("#prog").style.width = "100%";
+  if(!resultSent){ resultSent = true; sendLead("completo", r); track("Lead"); }
+  $("#yes").onclick = ()=> confirmYes(r, wa);
+  $("#no").onclick = confirmNo;
+}
+
+/* ========= CONFIRMAÇÃO DO DIAGNÓSTICO ========= */
+const ACOES = {
+  pos:{ t:"Posicionamento", d:"Escreva em uma frase quem você ajuda e qual resultado entrega (ex.: “ajudo mulheres acima de 35 anos a emagrecer sem largar a rotina”). Troque a bio e os destaques do Instagram para vender esse resultado, e não a sua profissão." },
+  con:{ t:"Conteúdo", d:"Publique 3 conteúdos sobre a dor do seu aluno ideal. Nos 3 primeiros segundos, mostre o problema dele. No final, chame para conversar no direct." },
+  ven:{ t:"Vendas", d:"Escreva um roteiro de 5 mensagens para o WhatsApp: entender a situação, o resultado que ele quer, apresentar o plano, tratar a objeção de preço e fechar. Aplique em todo mundo que te chamar." }
+};
+
+function buildPlan(r){
+  const a = answers, priKey = OBJETIVOS[a.objetivo].pri;
+  const ordem = [priKey, ...PILLARS.map(p=>p.key).filter(k=>k!==priKey)];
+  const alunos = Math.ceil(r.gap / TICKET_ONLINE);
+  const oferta = (r.score>=2)
+    ? "Pare de vender sessão ou horário. Monte um plano mensal de consultoria online, com um resultado claro e um preço que não dependa de quantas horas você trabalha."
+    : "Revise a oferta que você já tem: deixe o resultado claro, o plano mensal e o preço independente de horas, para que ela possa ser vendida todo mês.";
+  return [
+    { t:"Transforme a meta em número de alunos",
+      d: r.gap>0 ? `Sua meta de ${brl(a.meta)}/mês pede cerca de ${alunos} alunos online recorrentes a ${brl(TICKET_ONLINE)}. Anote quantos você tem hoje: esse é o seu placar dos próximos 90 dias.`
+                 : `Você já alcança ${brl(a.meta)}/mês. Anote quantas horas por semana isso te custa hoje: o seu placar dos próximos 90 dias é entregar o mesmo faturamento com menos horas.` },
+    { t:"Monte uma oferta recorrente", d:oferta },
+    { t:`Comece pelo pilar ${ACOES[ordem[0]].t}`, d:"Esta semana: " + ACOES[ordem[0]].d, hi:true },
+    { t:`Em seguida, ${ACOES[ordem[1]].t} e ${ACOES[ordem[2]].t}`, d:"Quando o primeiro degrau estiver rodando, avance para os outros dois pilares, um de cada vez. Na conversa com o gestor, você recebe a ordem e os detalhes para o seu caso." },
+    { t:"Leve o plano para quem faz isso todo dia", d:`Um gestor de carreira da Scala Fitness analisa o perfil ${a.insta} e monta com você o plano dos próximos 90 dias, em uma conversa de 20 minutos.` }
+  ];
+}
+
+function confirmYes(r, wa){
+  const a = answers;
+  sendLead("validou_sim", r); track("DiagnosticoConfirmado", true);
+  const plan = buildPlan(r).map((s,i)=>`
+    <div class="pil ${s.hi?'pri':''}">
+      <div class="n">${i+1}</div>
+      <div><b>${s.t}${s.hi?'<span class="badge">Prioridade</span>':''}</b><span>${s.d}</span></div>
+    </div>`).join("");
+  $("#confirm").outerHTML = `
+    <div class="confirm ok" id="confirm">
+      <h2>Parabéns por querer evoluir, ${a.nome}.</h2>
+      <p class="sub">Olhar os próprios números de frente é o primeiro passo de quem quer crescer, e você acabou de fazer isso. Agora vem a parte que transforma diagnóstico em resultado: o seu passo a passo.</p>
+    </div>`;
+  $("#after").innerHTML = `
+    <div class="card"><h3>Seu passo a passo para buscar ${brl(a.meta)} por mês</h3><div class="pillars">${plan}</div></div>
+    <div class="quote">Treino muda o corpo. Método muda a carreira.</div>
+    <div class="cta-box">
+      <p>Seu objetivo é <b style="color:#fff">${OBJETIVOS[a.objetivo].label}</b>. O próximo passo é conversar com um gestor de carreira e montar o seu plano de 90 dias.</p>
+      <a class="btn" href="${wa}" target="_blank" rel="noopener" id="wa">Falar com um gestor de carreira no WhatsApp</a>
+    </div>`;
+  $("#wa").addEventListener("click", ()=>{ sendLead("clicou_whatsapp", r); track("Contact"); });
+  $("#confirm").scrollIntoView({ behavior:"smooth", block:"start" });
+}
+
+function confirmNo(){
+  sendLead("validou_nao", compute()); track("DiagnosticoContestado", true);
+  const campo = id => {
+    const s = steps.find(x=>x.id===id);
+    return `<label class="fl">${FIELD_LABEL[id]}<select id="f_${id}">${s.opts.map(o=>`<option value="${o.v}" ${o.v===answers[id]?"selected":""}>${o.l}</option>`).join("")}</select></label>`;
+  };
+  $("#confirm").innerHTML = `
+    <h2>Sem problema. Onde erramos?</h2>
+    <p class="sub">Corrija o que estiver diferente e recalculamos o seu diagnóstico na hora.</p>
+    ${["renda","meta","horas"].map(campo).join("")}
+    <button class="btn" id="recalc">Recalcular meu diagnóstico</button>`;
+  $("#recalc").onclick = ()=>{
+    ["renda","meta","horas"].forEach(id=>{
+      const raw = $("#f_"+id).value;
+      answers[id] = steps.find(x=>x.id===id).opts.find(o=>String(o.v)===raw).v;
+    });
+    sendLead("corrigiu", compute());
+    renderResult($("#stage .screen"));
+    window.scrollTo({ top:0 });
+  };
+}
+
+/* Campos planos (sem objetos aninhados) para o Make ler direto. lead_id + etapa permitem juntar as etapas do mesmo lead. */
+function buildPayload(etapa, r){
+  const a = answers;
+  const p = {
+    lead_id:LEAD_ID, etapa,
+    nome:a.nome||"", whatsapp:a.whats||"", email:a.email||"", area_atuacao:a.area||"", instagram:a.insta||"",
+    renda_atual:a.renda||"", renda_meta:a.meta||"",
+    horas_semana:a.horas||"", objetivo:a.objetivo||"",
+    ...tracking,
+    criado_em:new Date().toISOString()
+  };
+  if(r){ p.nivel = r.level.name; p.prisao_pct = r.pct; p.temperatura_lead = r.temp; }
+  return p;
+}
+
+function sendLead(etapa, r){
+  const p = buildPayload(etapa, r);
+  console.log("LEAD →", etapa, p);
+  if(!WEBHOOK_URL) return;
+  try{
+    // form-urlencoded + no-cors: o navegador envia sem bloqueio de CORS e o Make lê os campos direto
+    fetch(WEBHOOK_URL, { method:"POST", mode:"no-cors", keepalive:true,
+      headers:{ "Content-Type":"application/x-www-form-urlencoded" },
+      body:new URLSearchParams(p).toString() });
+  }catch(e){ console.warn("Falha ao enviar lead", e); }
+}
+
+render();
+</script>
+</body>
+</html>
