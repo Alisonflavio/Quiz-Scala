@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", var(--font-inter), system-ui, sans-serif;
+  --color-brand: #2f6bff;
+  --color-brand-dark: #2259e0;
+}
+
+/* Visual escuro azulado da ferramenta. Em vez de reescrever cada tela, a paleta do Tailwind é
+ * remapeada: os cinzas ficam invertidos (50 = mais escuro … 900 = mais claro) e os tons claros de
+ * cores de apoio viram versões translúcidas que funcionam sobre o fundo escuro. */
+@theme {
+  --color-surface: #1a2028;
+
+  --color-gray-50: #181d24;
+  --color-gray-100: #1f252e;
+  --color-gray-200: #2a323e;
+  --color-gray-300: #3a4452;
+  --color-gray-400: #7d8a9f;
+  --color-gray-500: #97a3b6;
+  --color-gray-600: #b0bacb;
+  --color-gray-700: #c9d1de;
+  --color-gray-800: #e3e8f0;
+  --color-gray-900: #f4f6fa;
+  --color-slate-100: #1f252e;
+
+  --color-rose-50: rgba(244, 63, 94, 0.12);
+  --color-rose-200: rgba(244, 63, 94, 0.32);
+  --color-emerald-50: rgba(16, 185, 129, 0.12);
+  --color-amber-50: rgba(245, 158, 11, 0.12);
+  --color-amber-200: rgba(245, 158, 11, 0.32);
+  --color-sky-50: rgba(14, 165, 233, 0.12);
+  --color-sky-200: rgba(14, 165, 233, 0.32);
+  --color-violet-50: rgba(139, 92, 246, 0.14);
+  --color-indigo-50: rgba(99, 102, 241, 0.14);
+  --color-orange-50: rgba(249, 115, 22, 0.12);
+  --color-fuchsia-50: rgba(217, 70, 239, 0.12);
+}
+
+/* controles nativos escuros só nas telas da ferramenta (o formulário público não usa a classe) */
+html:has(.admin-root) { color-scheme: dark; }
+html, body { background: #14181e; color: #e3e8f0; }
+/* SF Pro em iPhone/Mac; o Inter (carregado no layout) cobre os outros aparelhos */
+body { font-family: var(--font-sans); }
+/* azul da marca em texto precisa ser mais claro pra ler sobre o fundo escuro */
+.text-brand, .hover\:text-brand:hover { color: #8db1ff; }
+
+/* controles do painel */
+@utility input { @apply w-full rounded-lg border border-gray-300 bg-white/[0.06] px-3 py-2 text-[15px] outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/30; }
+@utility btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-[15px] font-semibold transition disabled:opacity-50; }
+@utility btn-primary { @apply btn bg-brand text-white hover:bg-brand-dark; }
+@utility btn-outline { @apply btn border border-gray-300 bg-white/[0.04] text-gray-700 hover:border-gray-400 hover:bg-white/[0.08]; }
+@utility btn-outline-brand { @apply btn border border-brand bg-transparent text-[#8db1ff] hover:bg-brand/10; }
+@utility btn-danger { @apply btn border border-rose-500 bg-transparent text-rose-400 hover:bg-rose-500/10; }
+@utility label { @apply block text-[15px] font-medium text-gray-800; }
+@utility hint { @apply text-sm text-gray-500; }
+
+/* tela de entrada: campos sobre o cartão de vidro */
+@utility auth-input { @apply w-full rounded-xl border border-white/10 bg-white/[0.06] px-4 py-3 text-[15px] text-white outline-none transition placeholder:text-white/40 focus:border-brand focus:ring-2 focus:ring-brand/30; }
+.auth-input:-webkit-autofill { -webkit-text-fill-color: #fff; box-shadow: 0 0 0 1000px #1f2630 inset; caret-color: #fff; }
+
+/* fundo com brilho azul e pontinhos, se mexendo devagar (entrada e painel) */
+@keyframes auth-drift { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-4%, 2.5%); } }
+.auth-glow, .auth-dots { animation: auth-drift 11s ease-in-out infinite; }
