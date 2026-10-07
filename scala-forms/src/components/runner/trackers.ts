@@ -51,10 +51,13 @@ fbq('init','${clean(s.facebookPixel.id)}');fbq('track','PageView');`);
   }
 }
 
-/** Evento de conversão: Lead (Meta), generate_lead (GA), SubmitForm (TikTok), form_conversion (GTM) */
+/** Evento de conversão: Lead + EndForm (Meta; EndForm é o evento otimizado nas campanhas Scala), generate_lead (GA), SubmitForm (TikTok), form_conversion (GTM) */
 export function trackConversion(s: Settings, data: Record<string, unknown>) {
   const w = window as W;
-  if (s.facebookPixel.enabled) w.fbq?.("track", "Lead");
+  if (s.facebookPixel.enabled) {
+    w.fbq?.("track", "Lead");
+    w.fbq?.("trackCustom", "EndForm");
+  }
   if (s.ga.enabled) w.gtag?.("event", "generate_lead", data);
   if (s.tiktok.enabled) w.ttq?.track("SubmitForm");
   if (s.gtm.enabled) (w.dataLayer = w.dataLayer || []).push({ event: "form_conversion", ...data });
