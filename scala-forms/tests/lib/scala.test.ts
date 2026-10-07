@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeScala, pontosCriticos, precisaDe, scoreLevel } from "@/lib/scala";
+import { ENTREGAVEIS, computeScala, pontosCriticos, precisaDe, scoreLevel } from "@/lib/scala";
 
 const base = { renda: "5000", aumento: "5000", horas: "40", objetivo: "renda_online" };
 
@@ -75,40 +75,73 @@ describe("pontosCriticos", () => {
 });
 
 describe("precisaDe", () => {
+  const nomes = (v: Record<string, string>, horas = 20) => precisaDe(v, horas).map((n) => n.precisa);
+  const ONLINE = "Modelo presencial + online";
+  const PRODUTO = "Oferta digital que vende todo mês";
+
   it("deve_seguir_a_dor_e_nao_so_o_objetivo", () => {
     // quer aumentar a renda online (objetivo de vendas), mas a dor é não atrair: conteúdo vem primeiro
-    const lista = precisaDe(
-      { dor: "atrair", bloqueio: "atrair", venda: "instagram_sem_constancia", objetivo: "renda_online" },
-      20,
-    );
+    const lista = nomes({
+      dor: "atrair",
+      bloqueio: "atrair",
+      venda: "instagram_sem_constancia",
+      objetivo: "renda_online",
+    });
     expect(lista[0]).toBe("Conteúdo que gera conversa");
   });
 
-  it("deve_trazer_sempre_3_itens_diferentes", () => {
-    const lista = precisaDe(
-      { dor: "vender", bloqueio: "estrategia", venda: "processo", objetivo: "produto_digital" },
-      50,
-    );
-    expect(lista).toHaveLength(3);
-    expect(new Set(lista).size).toBe(3);
+  it("deve_trazer_de_1_a_3_itens_diferentes", () => {
+    const lista = nomes({ dor: "vender", bloqueio: "estrategia", venda: "processo", objetivo: "produto_digital" }, 50);
+    expect(lista.length).toBeGreaterThanOrEqual(1);
+    expect(lista.length).toBeLessThanOrEqual(3);
+    expect(new Set(lista).size).toBe(lista.length);
   });
 
   it("deve_incluir_oferta_digital_para_quem_quer_produto_digital", () => {
-    const lista = precisaDe({ dor: "vender", bloqueio: "vender", venda: "campanhas", objetivo: "produto_digital" }, 20);
-    expect(lista).toContain("Oferta digital que vende todo mês");
+    expect(nomes({ dor: "vender", bloqueio: "vender", venda: "campanhas", objetivo: "produto_digital" })).toContain(
+      PRODUTO,
+    );
   });
 
-  it("deve_priorizar_modelo_online_com_agenda_cheia", () => {
-    expect(
-      precisaDe({ dor: "agenda_cheia", bloqueio: "estrategia", venda: "processo", objetivo: "dobrar_clientes" }, 45)[0],
-    ).toBe("Modelo presencial + online");
+  it("nunca_deve_mostrar_oferta_digital_se_ela_nao_escolheu_produto_digital", () => {
+    const dores = ["atrair", "agenda_cheia", "instagram", "vender"];
+    const bloqueios = ["atrair", "posicionamento", "vender", "estrategia"];
+    const vendas = ["indicacao", "instagram_sem_constancia", "campanhas", "processo"];
+    const resultados = ["agenda_cheia", "dobrar_faturamento", "online", "referencia"];
+    for (const dor of dores)
+      for (const bloqueio of bloqueios)
+        for (const venda of vendas)
+          for (const resultado of resultados)
+            expect(nomes({ dor, bloqueio, venda, resultado, objetivo: "renda_online" }, 50)).not.toContain(PRODUTO);
   });
 
-  it("deve_ter_uma_resposta_padrao_sem_nenhuma_resposta", () => {
-    expect(precisaDe({}, 10)).toEqual([
-      "Processo de vendas previsível",
-      "Conteúdo que gera conversa",
-      "Posicionamento forte",
-    ]);
+  it("deve_incluir_modelo_online_com_agenda_cheia_e_com_o_resultado_online", () => {
+    const agenda = { dor: "agenda_cheia", bloqueio: "estrategia", venda: "processo", objetivo: "dobrar_clientes" };
+    expect(nomes(agenda, 45)[0]).toBe(ONLINE);
+    expect(nomes({ dor: "atrair", resultado: "online", objetivo: "renda_online" })).toContain(ONLINE);
+  });
+
+  it("nao_deve_mostrar_modelo_online_so_porque_ela_atende_muitas_horas", () => {
+    const semSinal = {
+      dor: "atrair",
+      bloqueio: "posicionamento",
+      venda: "indicacao",
+      resultado: "referencia",
+      objetivo: "renda_online",
+    };
+    expect(nomes(semSinal, 60)).not.toContain(ONLINE);
+  });
+
+  it("deve_ligar_cada_necessidade_ao_entregavel_da_scala", () => {
+    const lista = precisaDe({ dor: "atrair", venda: "campanhas", objetivo: "produto_digital" }, 20);
+    for (const n of lista) expect(ENTREGAVEIS).toContain(n.tem);
+    expect(lista.find((n) => n.precisa === "Conteúdo que gera conversa")!.tem).toBe("Modelos de perfil e conteúdo");
+    expect(lista.find((n) => n.precisa === "Processo de vendas previsível")!.tem).toBe(
+      "Roteiros de venda pro WhatsApp",
+    );
+  });
+
+  it("deve_cair_so_no_mais_comum_sem_nenhuma_resposta", () => {
+    expect(nomes({}, 10)).toEqual(["Processo de vendas previsível"]);
   });
 });

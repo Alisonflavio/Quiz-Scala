@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { interpolate, optionLabelFor } from "@/lib/engine";
-import { ENTREGAVEIS, brl, computeScala, pontosCriticos, precisaDe, scoreLevel } from "@/lib/scala";
+import { brl, computeScala, pontosCriticos, precisaDe, scoreLevel } from "@/lib/scala";
 import { SCALA_WA_MESSAGE } from "@/lib/templates";
 import { alpha, onColor } from "@/lib/theme";
 import type { Field, FormDoc } from "@/lib/types";
@@ -465,8 +465,6 @@ export default function ScalaDiagnosis({ doc, field, vars: initialVars, utm, res
   };
   const btn: React.CSSProperties = { background: acc, color: onColor(acc), borderRadius: 14 };
   const logo = t.logo && <img src={t.logo} alt="" className="mx-auto mb-10 h-8 max-w-[200px] object-contain" />;
-  // o entregável que mais resolve o caso dela vem primeiro
-  const order = [d.entregavel, ...ENTREGAVEIS.map((_, i) => i).filter((i) => i !== d.entregavel)];
 
   /* ---------- tela 2: a solução ---------- */
   if (page === "solution") {
@@ -636,28 +634,12 @@ export default function ScalaDiagnosis({ doc, field, vars: initialVars, utm, res
         </h2>
         <ul className="space-y-2.5">
           {precisaDe(vars, r.horas).map((n) => (
-            <Item key={n} color={GOAL_GREEN} icon="✓" text={text}>
-              <b>{n}</b>
-            </Item>
-          ))}
-        </ul>
-      </div>
-
-      <div className="mb-7 p-5" style={{ border: `2px solid ${acc}`, background: alpha(acc, 0.08), borderRadius: 20 }}>
-        <h2 className="mb-4 text-lg font-extrabold" style={{ color: t.questionColor }}>
-          O que a Scala tem para isso
-        </h2>
-        <ul className="space-y-3">
-          {order.map((i) => (
-            <li key={i} className="flex gap-3 text-[15.5px] leading-snug" style={{ color: text }}>
-              <span
-                className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-sm font-bold"
-                style={{ background: acc, color: onColor(acc) }}
-              >
-                ✓
+            <Item key={n.precisa} color={GOAL_GREEN} icon="✓" text={text}>
+              <b>{n.precisa}</b>
+              <span className="mt-0.5 block text-sm" style={{ color: muted }}>
+                Na Scala: <b style={{ color: acc }}>{n.tem}</b>
               </span>
-              <span>{ENTREGAVEIS[i]}</span>
-            </li>
+            </Item>
           ))}
         </ul>
       </div>

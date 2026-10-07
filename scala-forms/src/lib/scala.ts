@@ -183,13 +183,16 @@ export function pontosCriticos(vars: Record<string, string>, r: ScalaResult): st
 
 type Pilar = "posicionamento" | "conteudo" | "vendas" | "escala" | "produto";
 
+/** O que a pessoa precisa e, ao lado, o entregável da Scala que responde a isso */
+export type Necessidade = { precisa: string; tem: string };
+
 // cada necessidade é uma promessa que a mentoria já faz na ficha oficial do produto
-const NECESSIDADE: Record<Pilar, string> = {
-  posicionamento: "Posicionamento forte",
-  conteudo: "Conteúdo que gera conversa",
-  vendas: "Processo de vendas previsível",
-  escala: "Modelo presencial + online",
-  produto: "Oferta digital que vende todo mês",
+const NECESSIDADE: Record<Pilar, Necessidade> = {
+  posicionamento: { precisa: "Posicionamento forte", tem: ENTREGAVEIS[0] },
+  conteudo: { precisa: "Conteúdo que gera conversa", tem: ENTREGAVEIS[1] },
+  vendas: { precisa: "Processo de vendas previsível", tem: ENTREGAVEIS[2] },
+  escala: { precisa: "Modelo presencial + online", tem: ENTREGAVEIS[3] },
+  produto: { precisa: "Oferta digital que vende todo mês", tem: ENTREGAVEIS[0] },
 };
 const PILAR_POR_DOR: Record<string, Pilar> = {
   atrair: "conteudo",
@@ -215,11 +218,21 @@ const PILAR_POR_OBJETIVO: Record<string, Pilar> = {
   dobrar_clientes: "posicionamento",
   renda_online: "vendas",
 };
+const PILAR_POR_RESULTADO: Record<string, Pilar> = {
+  agenda_cheia: "conteudo",
+  dobrar_faturamento: "vendas",
+  online: "escala",
+  referencia: "posicionamento",
+};
 // em caso de empate, vale esta ordem
 const ORDEM_PILARES: Pilar[] = ["vendas", "conteudo", "posicionamento", "escala", "produto"];
 
-/** As 3 coisas que a pessoa precisa, escolhidas pelo que ela marcou (dor pesa mais que o resto) */
-export function precisaDe(vars: Record<string, string>, horas: number): string[] {
+/**
+ * O que a pessoa precisa, de 1 a 3 itens, só do que ela sinalizou nas respostas (dor pesa mais que o resto).
+ * Nada entra por preenchimento: quem não marcou nada sobre online ou produto digital não vê isso.
+ * As horas só reforçam o "modelo online" se ela já deu outro sinal para ele.
+ */
+export function precisaDe(vars: Record<string, string>, horas: number): Necessidade[] {
   const pontos: Record<Pilar, number> = { posicionamento: 0, conteudo: 0, vendas: 0, escala: 0, produto: 0 };
   const soma = (p: Pilar | undefined, peso: number) => {
     if (p) pontos[p] += peso;
@@ -227,12 +240,14 @@ export function precisaDe(vars: Record<string, string>, horas: number): string[]
   soma(PILAR_POR_DOR[vars.dor ?? ""], 3);
   soma(PILAR_POR_BLOQUEIO[vars.bloqueio ?? ""], 2);
   soma(PILAR_POR_VENDA[vars.venda ?? ""], 2);
+  soma(PILAR_POR_RESULTADO[vars.resultado ?? ""], 2);
   soma(PILAR_POR_OBJETIVO[vars.objetivo ?? ""], 2);
-  if (horas >= 35) soma("escala", 1);
-  return [...ORDEM_PILARES]
+  if (horas >= 35 && pontos.escala > 0) pontos.escala += 1;
+  const escolhidos = ORDEM_PILARES.filter((p) => pontos[p] > 0)
     .sort((a, b) => pontos[b] - pontos[a])
-    .slice(0, 3)
-    .map((p) => NECESSIDADE[p]);
+    .slice(0, 3);
+  // sem nenhuma resposta (formulário antigo), cai no mais comum
+  return (escolhidos.length ? escolhidos : (["vendas"] as Pilar[])).map((p) => NECESSIDADE[p]);
 }
 
 /** Rótulo e cor do score: vermelho (crítico) → laranja → âmbar → verde */
