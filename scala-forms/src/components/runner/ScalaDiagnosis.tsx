@@ -537,7 +537,7 @@ export default function ScalaDiagnosis({ doc, field, vars: initialVars, utm, res
             Seu próximo passo
           </h2>
           <p className="mb-5 text-[16px] leading-relaxed" style={{ color: text }}>
-            Conversa <b>gratuita</b> de 20 min com um gestor da Scala.
+            Converse <b>gratuitamente</b> com o nosso gestor de carreira.
           </p>
           <a
             href={cfg.whatsapp ? wa : undefined}
