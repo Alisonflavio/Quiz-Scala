@@ -142,6 +142,99 @@ function careerScore(renda: number, horas: number, meta: number, venda?: string)
   return Math.max(5, Math.min(100, vendas + rendaPts + tempo + alvo));
 }
 
+/*
+ * Pontos críticos e necessidades, montados a partir do que a própria pessoa respondeu
+ * (dor, como vende, bloqueio, objetivo e horas), e não só do objetivo. Textos de uma linha;
+ * **assim** marca o trecho em destaque. Quem renderiza troca isso por negrito.
+ */
+const PROBLEMA_POR_DOR: Record<string, string> = {
+  atrair: "Você **não atrai alunos novos**",
+  agenda_cheia: "Agenda cheia, **faturamento parado**",
+  instagram: "Seu Instagram **não vira venda**",
+  vender: "**Dificuldade para cobrar mais**",
+};
+const PROBLEMA_POR_VENDA: Record<string, string> = {
+  indicacao: "Você depende de **indicação**",
+  instagram_sem_constancia: "Instagram **sem constância**",
+  campanhas: "Ações **sem processo que se repita**",
+  processo: "Processo **preso às suas horas**",
+};
+const PROBLEMA_POR_BLOQUEIO: Record<string, string> = {
+  atrair: "Falta **atrair os alunos certos**",
+  posicionamento: "Falta **posicionamento e conteúdo**",
+  vender: "Falta **vender melhor**",
+  estrategia: "Falta **estratégia para escalar**",
+};
+
+/** Os problemas que a pessoa mostrou nas respostas, do mais importante ao menos (3 ou 4 linhas) */
+export function pontosCriticos(vars: Record<string, string>, r: ScalaResult): string[] {
+  const out: string[] = [];
+  const dor = PROBLEMA_POR_DOR[vars.dor ?? ""];
+  if (dor) out.push(dor);
+  const venda = PROBLEMA_POR_VENDA[vars.venda ?? ""];
+  if (venda) out.push(venda);
+  const h = Math.round(r.hoursNeeded);
+  out.push(r.fits ? `Meta pede **${h}h/semana** vendendo hora` : `Meta pede **${h}h/semana**: não cabe`);
+  // o bloqueio só entra se for um problema diferente da dor que ela já marcou
+  const bloqueio = vars.bloqueio && vars.bloqueio !== vars.dor ? PROBLEMA_POR_BLOQUEIO[vars.bloqueio] : undefined;
+  if (bloqueio) out.push(bloqueio);
+  return out;
+}
+
+type Pilar = "posicionamento" | "conteudo" | "vendas" | "escala" | "produto";
+
+// cada necessidade é uma promessa que a mentoria já faz na ficha oficial do produto
+const NECESSIDADE: Record<Pilar, string> = {
+  posicionamento: "Posicionamento forte",
+  conteudo: "Conteúdo que gera conversa",
+  vendas: "Processo de vendas previsível",
+  escala: "Modelo presencial + online",
+  produto: "Oferta digital que vende todo mês",
+};
+const PILAR_POR_DOR: Record<string, Pilar> = {
+  atrair: "conteudo",
+  instagram: "conteudo",
+  vender: "vendas",
+  agenda_cheia: "escala",
+};
+const PILAR_POR_BLOQUEIO: Record<string, Pilar> = {
+  atrair: "conteudo",
+  posicionamento: "posicionamento",
+  vender: "vendas",
+  estrategia: "escala",
+};
+const PILAR_POR_VENDA: Record<string, Pilar> = {
+  indicacao: "posicionamento",
+  instagram_sem_constancia: "conteudo",
+  campanhas: "vendas",
+  processo: "escala",
+};
+const PILAR_POR_OBJETIVO: Record<string, Pilar> = {
+  produto_digital: "produto",
+  presenca_redes: "conteudo",
+  dobrar_clientes: "posicionamento",
+  renda_online: "vendas",
+};
+// em caso de empate, vale esta ordem
+const ORDEM_PILARES: Pilar[] = ["vendas", "conteudo", "posicionamento", "escala", "produto"];
+
+/** As 3 coisas que a pessoa precisa, escolhidas pelo que ela marcou (dor pesa mais que o resto) */
+export function precisaDe(vars: Record<string, string>, horas: number): string[] {
+  const pontos: Record<Pilar, number> = { posicionamento: 0, conteudo: 0, vendas: 0, escala: 0, produto: 0 };
+  const soma = (p: Pilar | undefined, peso: number) => {
+    if (p) pontos[p] += peso;
+  };
+  soma(PILAR_POR_DOR[vars.dor ?? ""], 3);
+  soma(PILAR_POR_BLOQUEIO[vars.bloqueio ?? ""], 2);
+  soma(PILAR_POR_VENDA[vars.venda ?? ""], 2);
+  soma(PILAR_POR_OBJETIVO[vars.objetivo ?? ""], 2);
+  if (horas >= 35) soma("escala", 1);
+  return [...ORDEM_PILARES]
+    .sort((a, b) => pontos[b] - pontos[a])
+    .slice(0, 3)
+    .map((p) => NECESSIDADE[p]);
+}
+
 /** Rótulo e cor do score: vermelho (crítico) → laranja → âmbar → verde */
 export function scoreLevel(score: number): { label: string; color: string } {
   if (score < 40) return { label: "Crítico", color: "#FF4D4D" };

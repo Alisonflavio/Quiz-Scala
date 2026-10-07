@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { interpolate, optionLabelFor } from "@/lib/engine";
-import { ENTREGAVEIS, brl, computeScala, scoreLevel } from "@/lib/scala";
+import { ENTREGAVEIS, brl, computeScala, pontosCriticos, precisaDe, scoreLevel } from "@/lib/scala";
 import { SCALA_WA_MESSAGE } from "@/lib/templates";
 import { alpha, onColor } from "@/lib/theme";
 import type { Field, FormDoc } from "@/lib/types";
@@ -49,6 +49,53 @@ function Num({
 }
 
 const GOAL_GREEN = "#2FBF71";
+const CRITICAL_RED = "#FF5A5A";
+
+/* Troca o trecho entre ** ** por negrito na cor dada */
+function rich(text: string, color: string) {
+  return text.split("**").map((part, i) =>
+    i % 2 ? (
+      <b key={i} style={{ color }}>
+        {part}
+      </b>
+    ) : (
+      part
+    ),
+  );
+}
+
+/* Uma linha de lista com ícone redondo: vermelha para o problema, verde para a necessidade */
+function Item({
+  color,
+  icon,
+  children,
+  text,
+}: {
+  color: string;
+  icon: string;
+  children: React.ReactNode;
+  text: string;
+}) {
+  return (
+    <li
+      className="flex items-center gap-3 p-3.5 text-[15.5px] leading-snug"
+      style={{
+        background: alpha(color, 0.1),
+        border: `1px solid ${alpha(color, 0.35)}`,
+        borderRadius: 16,
+        color: text,
+      }}
+    >
+      <span
+        className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-sm font-extrabold"
+        style={{ background: color, color: "#0B0E12" }}
+      >
+        {icon}
+      </span>
+      <span>{children}</span>
+    </li>
+  );
+}
 
 /* Pontos de uma linha de "gráfico de crescimento" (sobe no geral, com pequenas ondulações,
  * como uma trilha de montanha). Fixos — só a posição do bonequinho e o quanto da linha já
@@ -418,6 +465,8 @@ export default function ScalaDiagnosis({ doc, field, vars: initialVars, utm, res
   };
   const btn: React.CSSProperties = { background: acc, color: onColor(acc), borderRadius: 14 };
   const logo = t.logo && <img src={t.logo} alt="" className="mx-auto mb-10 h-8 max-w-[200px] object-contain" />;
+  // o entregável que mais resolve o caso dela vem primeiro
+  const order = [d.entregavel, ...ENTREGAVEIS.map((_, i) => i).filter((i) => i !== d.entregavel)];
 
   /* ---------- tela 2: a solução ---------- */
   if (page === "solution") {
@@ -429,7 +478,6 @@ export default function ScalaDiagnosis({ doc, field, vars: initialVars, utm, res
       gargalo: d.area,
     }).replace(/\s+\(\)/g, "");
     const wa = `https://wa.me/${cfg.whatsapp}?text=${encodeURIComponent(msg)}`;
-    const order = [d.entregavel, ...ENTREGAVEIS.map((_, i) => i).filter((i) => i !== d.entregavel)];
     return (
       <div className="mx-auto max-w-xl px-5 pb-16 pt-8">
         {logo}
@@ -510,25 +558,6 @@ export default function ScalaDiagnosis({ doc, field, vars: initialVars, utm, res
           </div>
         )}
 
-        <div className="mb-8 p-5" style={card}>
-          <h2 className="mb-4 text-lg font-extrabold" style={{ color: t.questionColor }}>
-            Na conversa gratuita:
-          </h2>
-          <ul className="space-y-3">
-            {order.map((i) => (
-              <li key={i} className="flex gap-3 text-[15.5px] leading-snug" style={{ color: text }}>
-                <span
-                  className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-sm font-bold"
-                  style={{ background: acc, color: onColor(acc) }}
-                >
-                  ✓
-                </span>
-                <span>{ENTREGAVEIS[i]}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
         <div
           className="p-6 text-center"
           style={{ border: `2px solid ${acc}`, background: alpha(acc, 0.08), borderRadius: 20 }}
@@ -537,7 +566,7 @@ export default function ScalaDiagnosis({ doc, field, vars: initialVars, utm, res
             Seu próximo passo
           </h2>
           <p className="mb-5 text-[16px] leading-relaxed" style={{ color: text }}>
-            Converse <b>gratuitamente</b> com o nosso gestor de carreira.
+            Converse <b>agora</b> com o nosso especialista em carreira.
           </p>
           <a
             href={cfg.whatsapp ? wa : undefined}
@@ -550,7 +579,7 @@ export default function ScalaDiagnosis({ doc, field, vars: initialVars, utm, res
             className="block px-5 py-4 text-lg font-bold shadow-lg"
             style={{ background: "#25D366", color: "#fff", borderRadius: 14, opacity: cfg.whatsapp ? 1 : 0.5 }}
           >
-            Quero minha conversa gratuita
+            Falar com o especialista agora
           </a>
           {!cfg.whatsapp && (
             <p className="mt-2 text-xs opacity-60">Configure o WhatsApp do especialista na tela final do editor.</p>
@@ -577,15 +606,6 @@ export default function ScalaDiagnosis({ doc, field, vars: initialVars, utm, res
 
       <ScoreMeter score={r.score} muted={muted} track={alpha(t.answerColor, 0.12)} text={text} />
 
-      <div className="mb-7 p-5" style={{ border: `2px solid ${acc}`, background: alpha(acc, 0.08), borderRadius: 18 }}>
-        <p className="mb-1.5 text-[15px]" style={{ color: text }}>
-          Você precisa de um passo a passo para
-        </p>
-        <h1 className="text-[28px] font-extrabold leading-tight" style={{ color: acc }}>
-          {d.desejo}.
-        </h1>
-      </div>
-
       <div className="mb-7 p-5" style={card}>
         <h2 className="mb-1 text-sm font-bold uppercase tracking-wider" style={{ color: muted }}>
           Seus números
@@ -595,68 +615,64 @@ export default function ScalaDiagnosis({ doc, field, vars: initialVars, utm, res
           <Num label="Hoje você fatura" value={rendaLabel ?? `${brl(r.renda)}/mês`} muted={t.answerColor} />
           <Num label="Você atende hoje" value={horasLabel ?? `${r.horas}h/semana`} muted={t.answerColor} />
         </div>
-        <p className="mt-4 text-[15.5px] leading-relaxed" style={{ color: text }}>
-          {r.fits ? (
-            <>
-              Vendendo hora, sua meta pede <b>{Math.round(r.hoursNeeded)}h por semana</b> (+
-              {Math.round(r.hoursNeeded - r.horas)}h).
-            </>
-          ) : (
-            <>
-              Vendendo hora, sua meta pede <b>{Math.round(r.hoursNeeded)}h por semana</b>. Não cabe.
-            </>
-          )}
-        </p>
       </div>
 
-      <div
-        className="mb-7 p-5"
-        style={{ border: `1px solid ${alpha(acc, 0.5)}`, background: alpha(acc, 0.06), borderRadius: 18 }}
-      >
-        <Tag acc={acc}>Seu principal gargalo</Tag>
-        <p className="text-[17px] font-bold leading-snug" style={{ color: t.questionColor }}>
-          {d.gargalo}
-        </p>
+      <div className="mb-7">
+        <h2 className="mb-3 text-lg font-extrabold" style={{ color: t.questionColor }}>
+          O que está travando você
+        </h2>
+        <ul className="space-y-2.5">
+          {pontosCriticos(vars, r).map((p) => (
+            <Item key={p} color={CRITICAL_RED} icon="!" text={text}>
+              {rich(p, CRITICAL_RED)}
+            </Item>
+          ))}
+        </ul>
       </div>
 
-      <div className="mb-7 p-5" style={card}>
+      <div className="mb-7">
+        <h2 className="mb-3 text-lg font-extrabold" style={{ color: t.questionColor }}>
+          Para {d.desejo}, você precisa de:
+        </h2>
+        <ul className="space-y-2.5">
+          {precisaDe(vars, r.horas).map((n) => (
+            <Item key={n} color={GOAL_GREEN} icon="✓" text={text}>
+              <b>{n}</b>
+            </Item>
+          ))}
+        </ul>
+      </div>
+
+      <div className="mb-7 p-5" style={{ border: `2px solid ${acc}`, background: alpha(acc, 0.08), borderRadius: 20 }}>
         <h2 className="mb-4 text-lg font-extrabold" style={{ color: t.questionColor }}>
-          O que fazer agora
+          O que a Scala tem para isso
         </h2>
         <ul className="space-y-3">
-          {d.acoes.map((acao, i) => (
+          {order.map((i) => (
             <li key={i} className="flex gap-3 text-[15.5px] leading-snug" style={{ color: text }}>
               <span
-                className="grid h-6 w-6 shrink-0 place-items-center rounded-full border text-xs font-bold"
-                style={{ borderColor: alpha(acc, 0.5), color: acc }}
+                className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-sm font-bold"
+                style={{ background: acc, color: onColor(acc) }}
               >
-                {i + 1}
+                ✓
               </span>
-              <span>{acao}</span>
+              <span>{ENTREGAVEIS[i]}</span>
             </li>
           ))}
         </ul>
       </div>
 
-      <div
-        className="p-6 text-center"
-        style={{ border: `2px solid ${acc}`, background: alpha(acc, 0.08), borderRadius: 20 }}
+      <button
+        onClick={() => {
+          event("validou_sim");
+          if (!preview) trackEvent(doc.settings, "DiagnosticoConfirmado", true);
+          go("solution");
+        }}
+        className="w-full px-5 py-4 text-lg font-bold shadow-lg"
+        style={btn}
       >
-        <h2 className="mb-4 text-2xl font-extrabold" style={{ color: t.questionColor }}>
-          Isso tem solução.
-        </h2>
-        <button
-          onClick={() => {
-            event("validou_sim");
-            if (!preview) trackEvent(doc.settings, "DiagnosticoConfirmado", true);
-            go("solution");
-          }}
-          className="w-full px-5 py-4 text-lg font-bold shadow-lg"
-          style={btn}
-        >
-          Ver a solução
-        </button>
-      </div>
+        Ver a solução
+      </button>
       <button
         onClick={() => {
           event("validou_nao");
