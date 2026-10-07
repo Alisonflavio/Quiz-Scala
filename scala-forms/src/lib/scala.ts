@@ -143,111 +143,51 @@ function careerScore(renda: number, horas: number, meta: number, venda?: string)
 }
 
 /*
- * Pontos críticos e necessidades, montados a partir do que a própria pessoa respondeu
- * (dor, como vende, bloqueio, objetivo e horas), e não só do objetivo. Textos de uma linha;
- * **assim** marca o trecho em destaque. Quem renderiza troca isso por negrito.
+ * O que falta e o que fazer, em pares montados com as respostas da própria pessoa: cada problema que ela
+ * mostrou (dor, forma de vender, horas, bloqueio, produto digital) vira uma linha do que falta e, na mesma
+ * posição, a ação que resolve aquela linha. Textos de uma linha; **assim** marca o trecho em destaque.
+ * Nada entra sem uma resposta que justifique: quem não marcou algo sobre produto digital não vê isso.
  */
-const PROBLEMA_POR_DOR: Record<string, string> = {
-  atrair: "Você **não atrai alunos novos**",
-  agenda_cheia: "Agenda cheia, **faturamento parado**",
-  instagram: "Seu Instagram **não vira venda**",
-  vender: "**Dificuldade para cobrar mais**",
+export type Par = { falta: string; fazer: string };
+
+const POR_DOR: Record<string, Par> = {
+  atrair: { falta: "Você **não atrai alunos novos**", fazer: "Criar conteúdo que atrai alunos" },
+  agenda_cheia: { falta: "Agenda cheia, **faturamento parado**", fazer: "Valorizar seu tempo e faturar mais" },
+  instagram: { falta: "Seu Instagram **não vira venda**", fazer: "Transformar seguidores em conversas de venda" },
+  vender: { falta: "**Dificuldade para cobrar mais**", fazer: "Vender com segurança e cobrar mais" },
 };
-const PROBLEMA_POR_VENDA: Record<string, string> = {
-  indicacao: "Você depende de **indicação**",
-  instagram_sem_constancia: "Instagram **sem constância**",
-  campanhas: "Ações **sem processo que se repita**",
-  processo: "Processo **preso às suas horas**",
+const POR_VENDA: Record<string, Par> = {
+  indicacao: { falta: "Você depende de **indicação**", fazer: "Atrair alunos sem depender de indicação" },
+  instagram_sem_constancia: { falta: "Instagram **sem constância**", fazer: "Postar com constância e estratégia" },
+  campanhas: { falta: "Ações **sem processo que se repita**", fazer: "Montar um processo de vendas que se repita" },
+  processo: { falta: "Processo **preso às suas horas**", fazer: "Tirar o processo da dependência das suas horas" },
 };
-const PROBLEMA_POR_BLOQUEIO: Record<string, string> = {
-  atrair: "Falta **atrair os alunos certos**",
-  posicionamento: "Falta **posicionamento e conteúdo**",
-  vender: "Falta **vender melhor**",
-  estrategia: "Falta **estratégia para escalar**",
+const POR_BLOQUEIO: Record<string, Par> = {
+  atrair: { falta: "Falta **atrair os alunos certos**", fazer: "Atrair os alunos certos" },
+  posicionamento: {
+    falta: "Falta **posicionamento e conteúdo**",
+    fazer: "Definir posicionamento e conteúdo que destacam você",
+  },
+  vender: { falta: "Falta **vender melhor**", fazer: "Vender melhor para quem já chama" },
+  estrategia: { falta: "Falta **estratégia para escalar**", fazer: "Montar uma estratégia para escalar" },
+};
+const PRODUTO_DIGITAL: Par = {
+  falta: "**Sem produto digital** que vende todo mês",
+  fazer: "Montar uma oferta digital que vende todo mês",
 };
 
-/** Os problemas que a pessoa mostrou nas respostas, do mais importante ao menos (3 ou 4 linhas) */
-export function pontosCriticos(vars: Record<string, string>, r: ScalaResult): string[] {
-  const out: string[] = [];
-  const dor = PROBLEMA_POR_DOR[vars.dor ?? ""];
-  if (dor) out.push(dor);
-  const venda = PROBLEMA_POR_VENDA[vars.venda ?? ""];
-  if (venda) out.push(venda);
+/** De 1 a 4 pares falta/fazer, do mais importante ao menos, só com o que a pessoa respondeu */
+export function diagnosticoPorResposta(vars: Record<string, string>, r: ScalaResult): Par[] {
+  const lista: (Par | undefined)[] = [POR_DOR[vars.dor ?? ""], POR_VENDA[vars.venda ?? ""]];
   const h = Math.round(r.hoursNeeded);
-  out.push(r.fits ? `Meta pede **${h}h/semana** vendendo hora` : `Meta pede **${h}h/semana**: não cabe`);
-  // o bloqueio só entra se for um problema diferente da dor que ela já marcou
-  const bloqueio = vars.bloqueio && vars.bloqueio !== vars.dor ? PROBLEMA_POR_BLOQUEIO[vars.bloqueio] : undefined;
-  if (bloqueio) out.push(bloqueio);
-  return out;
-}
-
-type Pilar = "posicionamento" | "conteudo" | "vendas" | "escala" | "produto";
-
-/** O que a pessoa precisa e, ao lado, o entregável da Scala que responde a isso */
-export type Necessidade = { precisa: string; tem: string };
-
-// cada necessidade é uma promessa que a mentoria já faz na ficha oficial do produto
-const NECESSIDADE: Record<Pilar, Necessidade> = {
-  posicionamento: { precisa: "Posicionamento forte", tem: ENTREGAVEIS[0] },
-  conteudo: { precisa: "Conteúdo que gera conversa", tem: ENTREGAVEIS[1] },
-  vendas: { precisa: "Processo de vendas previsível", tem: ENTREGAVEIS[2] },
-  escala: { precisa: "Modelo presencial + online", tem: ENTREGAVEIS[3] },
-  produto: { precisa: "Oferta digital que vende todo mês", tem: ENTREGAVEIS[0] },
-};
-const PILAR_POR_DOR: Record<string, Pilar> = {
-  atrair: "conteudo",
-  instagram: "conteudo",
-  vender: "vendas",
-  agenda_cheia: "escala",
-};
-const PILAR_POR_BLOQUEIO: Record<string, Pilar> = {
-  atrair: "conteudo",
-  posicionamento: "posicionamento",
-  vender: "vendas",
-  estrategia: "escala",
-};
-const PILAR_POR_VENDA: Record<string, Pilar> = {
-  indicacao: "posicionamento",
-  instagram_sem_constancia: "conteudo",
-  campanhas: "vendas",
-  processo: "escala",
-};
-const PILAR_POR_OBJETIVO: Record<string, Pilar> = {
-  produto_digital: "produto",
-  presenca_redes: "conteudo",
-  dobrar_clientes: "posicionamento",
-  renda_online: "vendas",
-};
-const PILAR_POR_RESULTADO: Record<string, Pilar> = {
-  agenda_cheia: "conteudo",
-  dobrar_faturamento: "vendas",
-  online: "escala",
-  referencia: "posicionamento",
-};
-// em caso de empate, vale esta ordem
-const ORDEM_PILARES: Pilar[] = ["vendas", "conteudo", "posicionamento", "escala", "produto"];
-
-/**
- * O que a pessoa precisa, de 1 a 3 itens, só do que ela sinalizou nas respostas (dor pesa mais que o resto).
- * Nada entra por preenchimento: quem não marcou nada sobre online ou produto digital não vê isso.
- * As horas só reforçam o "modelo online" se ela já deu outro sinal para ele.
- */
-export function precisaDe(vars: Record<string, string>, horas: number): Necessidade[] {
-  const pontos: Record<Pilar, number> = { posicionamento: 0, conteudo: 0, vendas: 0, escala: 0, produto: 0 };
-  const soma = (p: Pilar | undefined, peso: number) => {
-    if (p) pontos[p] += peso;
-  };
-  soma(PILAR_POR_DOR[vars.dor ?? ""], 3);
-  soma(PILAR_POR_BLOQUEIO[vars.bloqueio ?? ""], 2);
-  soma(PILAR_POR_VENDA[vars.venda ?? ""], 2);
-  soma(PILAR_POR_RESULTADO[vars.resultado ?? ""], 2);
-  soma(PILAR_POR_OBJETIVO[vars.objetivo ?? ""], 2);
-  if (horas >= 35 && pontos.escala > 0) pontos.escala += 1;
-  const escolhidos = ORDEM_PILARES.filter((p) => pontos[p] > 0)
-    .sort((a, b) => pontos[b] - pontos[a])
-    .slice(0, 3);
-  // sem nenhuma resposta (formulário antigo), cai no mais comum
-  return (escolhidos.length ? escolhidos : (["vendas"] as Pilar[])).map((p) => NECESSIDADE[p]);
+  lista.push({
+    falta: r.fits ? `Meta pede **${h}h/semana** vendendo hora` : `Meta pede **${h}h/semana**: não cabe`,
+    fazer: "Faturar mais sem aumentar suas horas",
+  });
+  // o bloqueio só entra se for um problema diferente da dor que ela já marcou ("atrair" e "vender" repetiriam a dor)
+  if (vars.bloqueio !== vars.dor) lista.push(POR_BLOQUEIO[vars.bloqueio ?? ""]);
+  if (vars.objetivo === "produto_digital") lista.push(PRODUTO_DIGITAL);
+  return lista.filter((p): p is Par => !!p).slice(0, 4);
 }
 
 /** Rótulo e cor do score: vermelho (crítico) → laranja → âmbar → verde */

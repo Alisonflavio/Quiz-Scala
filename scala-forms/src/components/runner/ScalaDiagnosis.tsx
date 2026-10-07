@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { interpolate, optionLabelFor } from "@/lib/engine";
-import { brl, computeScala, pontosCriticos, precisaDe, scoreLevel } from "@/lib/scala";
+import { brl, computeScala, diagnosticoPorResposta, scoreLevel } from "@/lib/scala";
 import { SCALA_WA_MESSAGE } from "@/lib/templates";
 import { alpha, onColor } from "@/lib/theme";
 import type { Field, FormDoc } from "@/lib/types";
@@ -597,6 +597,7 @@ export default function ScalaDiagnosis({ doc, field, vars: initialVars, utm, res
   /* ---------- tela 1: o problema ---------- */
   const rendaLabel = optionLabelFor(doc, "renda", vars.renda);
   const horasLabel = optionLabelFor(doc, "horas", vars.horas);
+  const pares = diagnosticoPorResposta(vars, r);
   return (
     <div className="mx-auto max-w-xl px-5 pb-16 pt-8">
       {logo}
@@ -620,9 +621,9 @@ export default function ScalaDiagnosis({ doc, field, vars: initialVars, utm, res
           O que está travando você
         </h2>
         <ul className="space-y-2.5">
-          {pontosCriticos(vars, r).map((p) => (
-            <Item key={p} color={CRITICAL_RED} icon="!" text={text}>
-              {rich(p, CRITICAL_RED)}
+          {pares.map((p) => (
+            <Item key={p.falta} color={CRITICAL_RED} icon="!" text={text}>
+              {rich(p.falta, CRITICAL_RED)}
             </Item>
           ))}
         </ul>
@@ -630,15 +631,12 @@ export default function ScalaDiagnosis({ doc, field, vars: initialVars, utm, res
 
       <div className="mb-7">
         <h2 className="mb-3 text-lg font-extrabold" style={{ color: t.questionColor }}>
-          Para {d.desejo}, você precisa de:
+          O que você precisa fazer
         </h2>
         <ul className="space-y-2.5">
-          {precisaDe(vars, r.horas).map((n) => (
-            <Item key={n.precisa} color={GOAL_GREEN} icon="✓" text={text}>
-              <b>{n.precisa}</b>
-              <span className="mt-0.5 block text-sm" style={{ color: muted }}>
-                Na Scala: <b style={{ color: acc }}>{n.tem}</b>
-              </span>
+          {pares.map((p) => (
+            <Item key={p.fazer} color={GOAL_GREEN} icon="✓" text={text}>
+              <b>{p.fazer}</b>
             </Item>
           ))}
         </ul>

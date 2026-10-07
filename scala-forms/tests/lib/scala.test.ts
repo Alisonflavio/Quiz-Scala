@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ENTREGAVEIS, computeScala, pontosCriticos, precisaDe, scoreLevel } from "@/lib/scala";
+import { computeScala, diagnosticoPorResposta, scoreLevel } from "@/lib/scala";
 
 const base = { renda: "5000", aumento: "5000", horas: "40", objetivo: "renda_online" };
 
@@ -46,102 +46,60 @@ describe("computeScala", () => {
   });
 });
 
-describe("pontosCriticos", () => {
-  const vars = { ...base, dor: "atrair", venda: "indicacao", bloqueio: "atrair" };
+describe("diagnosticoPorResposta", () => {
+  const base2 = { ...base, dor: "atrair", venda: "indicacao", bloqueio: "atrair" };
+  const pares = (v: Record<string, string>) => diagnosticoPorResposta(v, computeScala(v)!);
 
-  it("deve_listar_a_dor_a_forma_de_vender_e_a_meta_em_horas", () => {
-    const pontos = pontosCriticos(vars, computeScala(vars)!);
-    expect(pontos).toEqual([
-      "Você **não atrai alunos novos**",
-      "Você depende de **indicação**",
-      "Meta pede **80h/semana**: não cabe",
+  it("deve_montar_pares_falta_e_fazer_a_partir_das_respostas", () => {
+    expect(pares(base2)).toEqual([
+      { falta: "Você **não atrai alunos novos**", fazer: "Criar conteúdo que atrai alunos" },
+      { falta: "Você depende de **indicação**", fazer: "Atrair alunos sem depender de indicação" },
+      { falta: "Meta pede **80h/semana**: não cabe", fazer: "Faturar mais sem aumentar suas horas" },
     ]);
   });
 
+  it("deve_dizer_que_a_meta_cabe_quando_esta_dentro_do_teto", () => {
+    expect(pares({ ...base2, horas: "20" }).map((p) => p.falta)).toContain("Meta pede **40h/semana** vendendo hora");
+  });
+
   it("deve_incluir_o_bloqueio_so_quando_for_diferente_da_dor", () => {
-    const outro = { ...vars, bloqueio: "posicionamento" };
-    expect(pontosCriticos(outro, computeScala(outro)!)).toContain("Falta **posicionamento e conteúdo**");
-  });
-
-  it("deve_dizer_que_cabe_quando_a_meta_esta_dentro_do_teto", () => {
-    const folgado = { ...vars, horas: "20" };
-    expect(pontosCriticos(folgado, computeScala(folgado)!)).toContain("Meta pede **40h/semana** vendendo hora");
-  });
-
-  it("deve_funcionar_com_respostas_antigas_sem_dor_nem_venda", () => {
-    const antigo = { ...base };
-    expect(pontosCriticos(antigo, computeScala(antigo)!)).toHaveLength(1);
-  });
-});
-
-describe("precisaDe", () => {
-  const nomes = (v: Record<string, string>, horas = 20) => precisaDe(v, horas).map((n) => n.precisa);
-  const ONLINE = "Modelo presencial + online";
-  const PRODUTO = "Oferta digital que vende todo mês";
-
-  it("deve_seguir_a_dor_e_nao_so_o_objetivo", () => {
-    // quer aumentar a renda online (objetivo de vendas), mas a dor é não atrair: conteúdo vem primeiro
-    const lista = nomes({
-      dor: "atrair",
-      bloqueio: "atrair",
-      venda: "instagram_sem_constancia",
-      objetivo: "renda_online",
+    expect(pares({ ...base2, bloqueio: "posicionamento" })).toContainEqual({
+      falta: "Falta **posicionamento e conteúdo**",
+      fazer: "Definir posicionamento e conteúdo que destacam você",
     });
-    expect(lista[0]).toBe("Conteúdo que gera conversa");
+    expect(pares(base2)).toHaveLength(3);
   });
 
-  it("deve_trazer_de_1_a_3_itens_diferentes", () => {
-    const lista = nomes({ dor: "vender", bloqueio: "estrategia", venda: "processo", objetivo: "produto_digital" }, 50);
-    expect(lista.length).toBeGreaterThanOrEqual(1);
-    expect(lista.length).toBeLessThanOrEqual(3);
-    expect(new Set(lista).size).toBe(lista.length);
-  });
-
-  it("deve_incluir_oferta_digital_para_quem_quer_produto_digital", () => {
-    expect(nomes({ dor: "vender", bloqueio: "vender", venda: "campanhas", objetivo: "produto_digital" })).toContain(
-      PRODUTO,
-    );
-  });
-
-  it("nunca_deve_mostrar_oferta_digital_se_ela_nao_escolheu_produto_digital", () => {
+  it("nunca_deve_falar_de_produto_digital_se_ela_nao_escolheu_esse_objetivo", () => {
     const dores = ["atrair", "agenda_cheia", "instagram", "vender"];
     const bloqueios = ["atrair", "posicionamento", "vender", "estrategia"];
     const vendas = ["indicacao", "instagram_sem_constancia", "campanhas", "processo"];
-    const resultados = ["agenda_cheia", "dobrar_faturamento", "online", "referencia"];
+    for (const dor of dores)
+      for (const bloqueio of bloqueios)
+        for (const venda of vendas) {
+          const texto = JSON.stringify(pares({ ...base, dor, bloqueio, venda, objetivo: "renda_online" }));
+          expect(texto).not.toMatch(/digital/i);
+        }
+    expect(JSON.stringify(pares({ ...base2, objetivo: "produto_digital" }))).toMatch(/digital/i);
+  });
+
+  it("deve_trazer_de_1_a_4_pares_sem_repetir_acao", () => {
+    const dores = ["atrair", "agenda_cheia", "instagram", "vender"];
+    const bloqueios = ["atrair", "posicionamento", "vender", "estrategia"];
+    const vendas = ["indicacao", "instagram_sem_constancia", "campanhas", "processo"];
     for (const dor of dores)
       for (const bloqueio of bloqueios)
         for (const venda of vendas)
-          for (const resultado of resultados)
-            expect(nomes({ dor, bloqueio, venda, resultado, objetivo: "renda_online" }, 50)).not.toContain(PRODUTO);
+          for (const objetivo of ["renda_online", "produto_digital"]) {
+            const lista = pares({ ...base, dor, bloqueio, venda, objetivo });
+            expect(lista.length).toBeGreaterThanOrEqual(1);
+            expect(lista.length).toBeLessThanOrEqual(4);
+            expect(new Set(lista.map((p) => p.fazer)).size).toBe(lista.length);
+            expect(lista.every((p) => p.falta && p.fazer)).toBe(true);
+          }
   });
 
-  it("deve_incluir_modelo_online_com_agenda_cheia_e_com_o_resultado_online", () => {
-    const agenda = { dor: "agenda_cheia", bloqueio: "estrategia", venda: "processo", objetivo: "dobrar_clientes" };
-    expect(nomes(agenda, 45)[0]).toBe(ONLINE);
-    expect(nomes({ dor: "atrair", resultado: "online", objetivo: "renda_online" })).toContain(ONLINE);
-  });
-
-  it("nao_deve_mostrar_modelo_online_so_porque_ela_atende_muitas_horas", () => {
-    const semSinal = {
-      dor: "atrair",
-      bloqueio: "posicionamento",
-      venda: "indicacao",
-      resultado: "referencia",
-      objetivo: "renda_online",
-    };
-    expect(nomes(semSinal, 60)).not.toContain(ONLINE);
-  });
-
-  it("deve_ligar_cada_necessidade_ao_entregavel_da_scala", () => {
-    const lista = precisaDe({ dor: "atrair", venda: "campanhas", objetivo: "produto_digital" }, 20);
-    for (const n of lista) expect(ENTREGAVEIS).toContain(n.tem);
-    expect(lista.find((n) => n.precisa === "Conteúdo que gera conversa")!.tem).toBe("Modelos de perfil e conteúdo");
-    expect(lista.find((n) => n.precisa === "Processo de vendas previsível")!.tem).toBe(
-      "Roteiros de venda pro WhatsApp",
-    );
-  });
-
-  it("deve_cair_so_no_mais_comum_sem_nenhuma_resposta", () => {
-    expect(nomes({}, 10)).toEqual(["Processo de vendas previsível"]);
+  it("deve_funcionar_com_respostas_antigas_sem_dor_nem_venda", () => {
+    expect(pares({ ...base })).toHaveLength(1);
   });
 });
