@@ -5,6 +5,7 @@ import { MediaView } from "@/components/editor/FieldPreview";
 import { UTM_KEYS, computeScore, interpolate, nextFieldId, validateAnswer, variables } from "@/lib/engine";
 import { LETTERS, alpha, background, fontHref, onColor } from "@/lib/theme";
 import { DEFAULT_WA_MESSAGE, afterOf, endButtonLabel, type AnswerValue, type Field, type FormDoc } from "@/lib/types";
+import { comImagemPadrao } from "@/lib/quiz-images";
 import PhoneInput from "./PhoneInput";
 import ScalaDiagnosis from "./ScalaDiagnosis";
 import { loadTrackers, trackConversion, trackEvent } from "./trackers";
@@ -367,7 +368,7 @@ export default function FormRunner({ formId, doc, preview }: Props) {
         {field ? (
           <div key={field.id} className="sf-in mx-auto w-full max-w-2xl">
             <FieldView
-              field={field}
+              field={comImagemPadrao(doc, field)}
               theme={t}
               vars={vars}
               value={answers[field.id]}

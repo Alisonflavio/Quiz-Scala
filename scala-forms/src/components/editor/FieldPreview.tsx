@@ -65,7 +65,7 @@ export function MediaView({ media, small, wide }: { media?: Media | null; small?
       <img
         src={media.url}
         alt=""
-        className={`mx-auto mb-6 block h-auto w-full ${small ? "max-w-[220px] max-h-32" : "max-w-[420px] max-h-[210px] sm:max-h-[280px]"} rounded-2xl object-cover object-[50%_30%]`}
+        className={`mx-auto mb-6 block h-auto w-full ${small ? "max-w-[220px] max-h-32" : "max-w-[420px] max-h-[230px] sm:max-h-[320px]"} rounded-2xl object-cover object-[50%_30%]`}
       />
     );
   if (media.kind === "image")
