@@ -5,6 +5,7 @@ import { MediaView } from "@/components/editor/FieldPreview";
 import { UTM_KEYS, computeScore, interpolate, nextFieldId, validateAnswer, variables } from "@/lib/engine";
 import { LETTERS, alpha, background, fontHref, onColor } from "@/lib/theme";
 import { DEFAULT_WA_MESSAGE, afterOf, endButtonLabel, type AnswerValue, type Field, type FormDoc } from "@/lib/types";
+import PhoneInput from "./PhoneInput";
 import ScalaDiagnosis from "./ScalaDiagnosis";
 import { loadTrackers, trackConversion, trackEvent } from "./trackers";
 
@@ -656,19 +657,27 @@ function FieldView({
             onSubmit();
           }}
         >
-          <input
-            ref={inputRef}
-            type={f.type === "email" ? "email" : f.type === "phone" ? "tel" : f.type === "number" ? "text" : "text"}
-            inputMode={f.type === "phone" || f.type === "number" ? "numeric" : undefined}
-            autoComplete={
-              f.type === "name" ? "given-name" : f.type === "email" ? "email" : f.type === "phone" ? "tel" : "off"
-            }
-            value={typeof value === "string" ? value : ""}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder={f.placeholder}
-            className="w-full border-b-2 bg-transparent pb-2 text-[clamp(20px,3.6vw,28px)] outline-none placeholder:opacity-40"
-            style={{ borderColor: alpha(t.answerColor, 0.5), color: t.answerColor }}
-          />
+          {f.type === "phone" ? (
+            <PhoneInput
+              key={f.id}
+              dddRef={inputRef}
+              value={typeof value === "string" ? value : ""}
+              onChange={onChange}
+              color={t.answerColor}
+            />
+          ) : (
+            <input
+              ref={inputRef}
+              type={f.type === "email" ? "email" : "text"}
+              inputMode={f.type === "number" ? "numeric" : undefined}
+              autoComplete={f.type === "name" ? "given-name" : f.type === "email" ? "email" : "off"}
+              value={typeof value === "string" ? value : ""}
+              onChange={(e) => onChange(e.target.value)}
+              placeholder={f.placeholder}
+              className="w-full border-b-2 bg-transparent pb-2 text-[clamp(20px,3.6vw,28px)] outline-none placeholder:opacity-40"
+              style={{ borderColor: alpha(t.answerColor, 0.5), color: t.answerColor }}
+            />
+          )}
           <button className="mt-6 px-6 py-3 font-semibold" style={btn}>
             {f.buttonLabel || "OK ✓"}
           </button>
