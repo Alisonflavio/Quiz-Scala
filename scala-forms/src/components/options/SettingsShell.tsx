@@ -17,8 +17,20 @@ const SettingsCtx = createContext<Ctx | null>(null);
 export const useSettings = () => useContext(SettingsCtx)!;
 
 /* Estado e botão "Salvar" compartilhados pelas páginas Opções e Integrações */
-export default function SettingsShell({ id, initialTitle, initialTheme, initialSettings, active, children }: {
-  id: string; initialTitle: string; initialTheme: Theme; initialSettings: Settings; active: "options" | "integrations"; children: ReactNode;
+export default function SettingsShell({
+  id,
+  initialTitle,
+  initialTheme,
+  initialSettings,
+  active,
+  children,
+}: {
+  id: string;
+  initialTitle: string;
+  initialTheme: Theme;
+  initialSettings: Settings;
+  active: "options" | "integrations";
+  children: ReactNode;
 }) {
   const [title, setTitle] = useState(initialTitle);
   const [theme, setThemeState] = useState(initialTheme);
@@ -44,11 +56,20 @@ export default function SettingsShell({ id, initialTitle, initialTheme, initialS
 
   const ctx: Ctx = {
     title,
-    setTitle: (v) => { setTitle(v); setDirty(true); },
+    setTitle: (v) => {
+      setTitle(v);
+      setDirty(true);
+    },
     theme,
-    setTheme: (p) => { setThemeState((t) => ({ ...t, ...p })); setDirty(true); },
+    setTheme: (p) => {
+      setThemeState((t) => ({ ...t, ...p }));
+      setDirty(true);
+    },
     settings,
-    setSettings: (p) => { setSettingsState((s) => ({ ...s, ...p })); setDirty(true); },
+    setSettings: (p) => {
+      setSettingsState((s) => ({ ...s, ...p }));
+      setDirty(true);
+    },
   };
 
   return (
@@ -61,7 +82,9 @@ export default function SettingsShell({ id, initialTitle, initialTheme, initialS
           <>
             {msg && <span className="text-sm text-emerald-400">{msg}</span>}
             {dirty && !msg && <span className="text-sm text-amber-400">Alterações não salvas</span>}
-            <button className="btn-primary" onClick={save} disabled={pending || !dirty}>{pending ? "Salvando..." : "Salvar"}</button>
+            <button className="btn-primary" onClick={save} disabled={pending || !dirty}>
+              {pending ? "Salvando..." : "Salvar"}
+            </button>
           </>
         }
       />
@@ -80,18 +103,34 @@ export function Section({ title, subtitle, children }: { title: string; subtitle
   );
 }
 
-export function Line({ title, desc, right, badge, children }: { title: string; desc?: ReactNode; right?: ReactNode; badge?: string; children?: ReactNode }) {
+export function Line({
+  title,
+  desc,
+  right,
+  badge,
+  children,
+}: {
+  title: string;
+  desc?: ReactNode;
+  right?: ReactNode;
+  badge?: string;
+  children?: ReactNode;
+}) {
   return (
     <div>
-      <div className="flex items-start justify-between gap-6">
-        <div>
+      <div className="flex items-start justify-between gap-4 sm:gap-6">
+        <div className="min-w-0">
           <div className="text-xl text-gray-800">
             {title}
-            {badge && <span className="ml-2 rounded bg-violet-50 px-1.5 py-0.5 align-middle text-xs text-violet-300">{badge}</span>}
+            {badge && (
+              <span className="ml-2 rounded bg-violet-50 px-1.5 py-0.5 align-middle text-xs text-violet-300">
+                {badge}
+              </span>
+            )}
           </div>
           {desc && <div className="mt-1 text-gray-600">{desc}</div>}
         </div>
-        {right}
+        {right && <div className="shrink-0">{right}</div>}
       </div>
       {children && <div className="mt-3">{children}</div>}
     </div>

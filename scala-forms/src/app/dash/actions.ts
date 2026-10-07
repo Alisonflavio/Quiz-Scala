@@ -1,7 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createUser, hashPassword, requireAdmin, requireUser } from "@/lib/auth";
+import { createSession, createUser, hashPassword, requireAdmin, requireUser } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { createForm, deleteForm, deleteResponses, duplicateForm, getForm, publishForm, saveDraft } from "@/lib/forms";
 import { deleteResponse, setManualTemperature } from "@/lib/responses";
@@ -125,7 +125,14 @@ export async function updateAccountAction(_: TeamState, fd: FormData): Promise<T
   if (name.length < 2) return { error: "Digite seu nome." };
   if (password && password.length < 8) return { error: "A nova senha precisa ter pelo menos 8 caracteres." };
   await query("UPDATE users SET name = $2 WHERE id = $1", [me.id, name]);
-  if (password) await query("UPDATE users SET password_hash = $2 WHERE id = $1", [me.id, await hashPassword(password)]);
+  if (password) {
+    // a nova versão invalida as sessões em outros aparelhos; a sessão atual é refeita para não deslogar quem trocou
+    await query("UPDATE users SET password_hash = $2, session_version = session_version + 1 WHERE id = $1", [
+      me.id,
+      await hashPassword(password),
+    ]);
+    await createSession(me.id);
+  }
   revalidatePath("/dash");
   return { ok: "Dados atualizados." };
 }

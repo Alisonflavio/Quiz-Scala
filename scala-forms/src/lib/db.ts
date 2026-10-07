@@ -56,6 +56,31 @@ CREATE TABLE IF NOT EXISTS assets (
   data       text NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- Cadastros aguardando confirmação por e-mail. A conta só é criada quando a pessoa clica no link:
+-- guarda-se o hash do token (nunca o token) e o pedido some depois de usado ou vencido.
+CREATE TABLE IF NOT EXISTS email_tokens (
+  token_hash text PRIMARY KEY,
+  email      text NOT NULL,
+  name       text NOT NULL,
+  expires_at timestamptz NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS email_tokens_email_idx ON email_tokens(email);
+ALTER TABLE email_tokens ENABLE ROW LEVEL SECURITY;
+
+-- Contadores do limite de requisições (ver rate-limit.ts)
+CREATE TABLE IF NOT EXISTS rate_limits (
+  key        text NOT NULL,
+  bucket     bigint NOT NULL,
+  count      integer NOT NULL DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (key, bucket)
+);
+ALTER TABLE rate_limits ENABLE ROW LEVEL SECURITY;
+
+-- Versão da sessão: trocar a senha incrementa e derruba as sessões antigas
+ALTER TABLE users ADD COLUMN IF NOT EXISTS session_version integer NOT NULL DEFAULT 0;
 `;
 
 const globalForDb = globalThis as unknown as { __runner?: Promise<Runner> };
@@ -83,7 +108,9 @@ async function createRunner(): Promise<Runner> {
     const pg = new PGlite(`${base}/pglite`);
     run = async (text, params = []) => (await pg.query<Row>(text, params)).rows;
   }
-  for (const stmt of SCHEMA.split(";").map((s) => s.trim()).filter(Boolean)) {
+  for (const stmt of SCHEMA.split(";")
+    .map((s) => s.trim())
+    .filter(Boolean)) {
     await run(stmt);
   }
 
@@ -98,7 +125,15 @@ async function createRunner(): Promise<Runner> {
       const doc = scalaTemplate();
       doc.fields = doc.fields.map((f) =>
         f.type === "thankyou"
-          ? { ...f, scala: { ...f.scala!, whatsapp: "41995150509", whatsappMessage: "Olá, tudo bem? Fui selecionado para falar com um especialista e gostaria de entender quais são os próximos passos." } }
+          ? {
+              ...f,
+              scala: {
+                ...f.scala!,
+                whatsapp: "41995150509",
+                whatsappMessage:
+                  "Olá, tudo bem? Fui selecionado para falar com um especialista e gostaria de entender quais são os próximos passos.",
+              },
+            }
           : f,
       );
       await run(
@@ -121,11 +156,13 @@ function runner() {
   return globalForDb.__runner;
 }
 
+/** Executa SQL parametrizado (`$1`, `$2`...) e devolve todas as linhas. */
 export async function query<T = Row>(text: string, params: unknown[] = []): Promise<T[]> {
   const run = await runner();
   return (await run(text, params)) as T[];
 }
 
+/** Como `query`, mas devolve só a primeira linha (ou `null` se não houver). */
 export async function queryOne<T = Row>(text: string, params: unknown[] = []): Promise<T | null> {
   const rows = await query<T>(text, params);
   return rows[0] ?? null;

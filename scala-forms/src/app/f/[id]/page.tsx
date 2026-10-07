@@ -8,7 +8,10 @@ export const dynamic = "force-dynamic";
 
 // webhook e planilha são segredos: ficam só no servidor, nunca vão no código da página
 function forBrowser(doc: FormDoc): FormDoc {
-  return { ...doc, settings: { ...doc.settings, webhook: { enabled: false, url: "" }, sheets: { enabled: false, url: "" } } };
+  return {
+    ...doc,
+    settings: { ...doc.settings, webhook: { enabled: false, url: "" }, sheets: { enabled: false, url: "" } },
+  };
 }
 
 async function load(id: string, preview: boolean) {
@@ -31,7 +34,11 @@ export async function generateMetadata(props: PageProps<"/f/[id]">): Promise<Met
 }
 
 function Message({ text }: { text: string }) {
-  return <main className="grid min-h-screen place-items-center bg-gray-50 p-6 text-center text-lg text-gray-600">{text}</main>;
+  return (
+    <main className="grid min-h-screen place-items-center bg-gray-50 p-6 text-center text-lg text-gray-600">
+      {text}
+    </main>
+  );
 }
 
 export default async function PublicForm(props: PageProps<"/f/[id]">) {
@@ -39,6 +46,7 @@ export default async function PublicForm(props: PageProps<"/f/[id]">) {
   const sp = (await props.searchParams) as Record<string, string | undefined>;
   const data = await load(id, sp.preview === "1");
   if (!data) return <Message text="Este formulário não existe ou ainda não foi publicado." />;
-  if (data.doc.settings.blocked && !data.preview) return <Message text="Este formulário não está mais aceitando respostas." />;
+  if (data.doc.settings.blocked && !data.preview)
+    return <Message text="Este formulário não está mais aceitando respostas." />;
   return <FormRunner formId={id} doc={forBrowser(data.doc)} preview={data.preview} />;
 }

@@ -1,4 +1,5 @@
 "use client";
+import { safeUrl } from "@/lib/safe-url";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MediaView } from "@/components/editor/FieldPreview";
 import { UTM_KEYS, computeScore, interpolate, nextFieldId, validateAnswer, variables } from "@/lib/engine";
@@ -43,8 +44,22 @@ function shuffled<T>(arr: T[], seed: string) {
 function AnimatedBackdrop({ acc }: { acc: string }) {
   return (
     <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-      <div className="sf-glow absolute" style={{ inset: "-25%", background: `radial-gradient(ellipse 55% 48% at 78% 22%, rgba(255,190,140,0.45) 0%, ${alpha(acc, 0.32)} 25%, ${alpha(acc, 0.14)} 50%, transparent 75%)` }} />
-      <div className="sf-dots absolute inset-0" style={{ backgroundImage: "radial-gradient(rgba(255,255,255,.35) 1.2px, transparent 1.2px)", backgroundSize: "22px 22px", maskImage: "radial-gradient(ellipse 65% 55% at 78% 22%, black, transparent 75%)", WebkitMaskImage: "radial-gradient(ellipse 65% 55% at 78% 22%, black, transparent 75%)" }} />
+      <div
+        className="sf-glow absolute"
+        style={{
+          inset: "-25%",
+          background: `radial-gradient(ellipse 55% 48% at 78% 22%, rgba(255,190,140,0.45) 0%, ${alpha(acc, 0.32)} 25%, ${alpha(acc, 0.14)} 50%, transparent 75%)`,
+        }}
+      />
+      <div
+        className="sf-dots absolute inset-0"
+        style={{
+          backgroundImage: "radial-gradient(rgba(255,255,255,.35) 1.2px, transparent 1.2px)",
+          backgroundSize: "22px 22px",
+          maskImage: "radial-gradient(ellipse 65% 55% at 78% 22%, black, transparent 75%)",
+          WebkitMaskImage: "radial-gradient(ellipse 65% 55% at 78% 22%, black, transparent 75%)",
+        }}
+      />
       <style>{`
         @keyframes sfDrift { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-4%, 2.5%); } }
         .sf-glow, .sf-dots { animation: sfDrift 11s ease-in-out infinite; }
@@ -58,21 +73,38 @@ function AnimatedBackdrop({ acc }: { acc: string }) {
  * resultado — a logo redonda (mesma da tela de boas-vindas) com um anel girando em volta, e
  * frases trocando embaixo. */
 const LOADING_MS = 2400;
-const LOADING_MESSAGES = ["Lendo suas respostas...", "Identificando onde você está travando...", "Montando o seu passo a passo...", "Quase lá..."];
+const LOADING_MESSAGES = [
+  "Lendo suas respostas...",
+  "Identificando onde você está travando...",
+  "Montando o seu passo a passo...",
+  "Quase lá...",
+];
 function LoadingReveal({ acc, color }: { acc: string; color: string }) {
   const [i, setI] = useState(0);
   useEffect(() => {
-    const id = setInterval(() => setI((v) => Math.min(v + 1, LOADING_MESSAGES.length - 1)), LOADING_MS / LOADING_MESSAGES.length);
+    const id = setInterval(
+      () => setI((v) => Math.min(v + 1, LOADING_MESSAGES.length - 1)),
+      LOADING_MS / LOADING_MESSAGES.length,
+    );
     return () => clearInterval(id);
   }, []);
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-7 px-6 text-center">
       <div className="relative h-28 w-28">
         <div className="absolute inset-0 rounded-full border-4" style={{ borderColor: alpha(color, 0.15) }} />
-        <div className="absolute inset-0 animate-spin rounded-full border-4 border-transparent" style={{ borderTopColor: acc, animationDuration: "0.9s" }} />
-        <img src="/scala/selo-orange.svg" alt="" className="absolute inset-3 h-[calc(100%-24px)] w-[calc(100%-24px)] rounded-full object-contain" />
+        <div
+          className="absolute inset-0 animate-spin rounded-full border-4 border-transparent"
+          style={{ borderTopColor: acc, animationDuration: "0.9s" }}
+        />
+        <img
+          src="/scala/selo-orange.svg"
+          alt=""
+          className="absolute inset-3 h-[calc(100%-24px)] w-[calc(100%-24px)] rounded-full object-contain"
+        />
       </div>
-      <p className="sf-in text-base" key={i} style={{ color: alpha(color, 0.75) }}>{LOADING_MESSAGES[i]}</p>
+      <p className="sf-in text-base" key={i} style={{ color: alpha(color, 0.75) }}>
+        {LOADING_MESSAGES[i]}
+      </p>
       <style>{`.sf-in{animation:sfin .35s ease}@keyframes sfin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}`}</style>
     </div>
   );
@@ -98,7 +130,13 @@ export default function FormRunner({ formId, doc, preview }: Props) {
   const field = doc.fields.find((f) => f.id === currentId);
   const vars = useMemo(() => variables(doc, answers), [doc, answers]);
   const inputs = doc.fields.filter((f) => f.type !== "welcome" && f.type !== "thankyou");
-  const progress = field?.type === "thankyou" || finished ? 1 : Math.max(0, inputs.findIndex((f) => f.id === currentId)) / Math.max(1, inputs.length);
+  const progress =
+    field?.type === "thankyou" || finished
+      ? 1
+      : Math.max(
+          0,
+          inputs.findIndex((f) => f.id === currentId),
+        ) / Math.max(1, inputs.length);
 
   useEffect(() => {
     if (!preview) loadTrackers(s);
@@ -120,7 +158,10 @@ export default function FormRunner({ formId, doc, preview }: Props) {
           return false;
         }
         if (!res.ok) return !complete; // falha no parcial não trava a pessoa
-        if (data.responseId) { responseId.current = data.responseId; setSavedId(data.responseId); }
+        if (data.responseId) {
+          responseId.current = data.responseId;
+          setSavedId(data.responseId);
+        }
         return true;
       } catch {
         return !complete;
@@ -232,13 +273,19 @@ export default function FormRunner({ formId, doc, preview }: Props) {
         const text = interpolate(f.whatsappMessage ?? DEFAULT_WA_MESSAGE, all).trim();
         event("clicou_whatsapp");
         if (!preview) trackEvent(s, "Contact");
-        window.open(`https://wa.me/${f.whatsappNumber}${text ? `?text=${encodeURIComponent(text)}` : ""}`, "_blank", "noopener");
+        window.open(
+          `https://wa.me/${f.whatsappNumber}${text ? `?text=${encodeURIComponent(text)}` : ""}`,
+          "_blank",
+          "noopener",
+        );
       } else if (kind === "button_file" && f.fileUrl) {
         event("baixou_arquivo");
-        window.open(f.fileUrl, "_blank", "noopener");
+        const file = safeUrl(f.fileUrl);
+        if (file) window.open(file, "_blank", "noopener");
       } else if (kind === "button_link" && f.buttonUrl) {
         event("clicou_botao");
-        location.href = withUtm(interpolate(f.buttonUrl, all));
+        const link = safeUrl(withUtm(interpolate(f.buttonUrl, all)));
+        if (link) location.href = link;
       }
     },
     [formId, preview, s, utm, vars, withUtm],
@@ -247,14 +294,19 @@ export default function FormRunner({ formId, doc, preview }: Props) {
   /* redirecionamento automático da tela final */
   useEffect(() => {
     if (field?.type !== "thankyou" || afterOf(field) !== "redirect" || !field.redirectUrl || preview) return;
-    const url = withUtm(interpolate(field.redirectUrl, { ...vars, ...utm }));
+    const url = safeUrl(withUtm(interpolate(field.redirectUrl, { ...vars, ...utm })));
+    if (!url) return;
     const tm = setTimeout(() => (location.href = url), 2500);
     return () => clearTimeout(tm);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [field?.id]);
 
   const logoAlign = t.logoPosition === "left" ? "mr-auto" : t.logoPosition === "right" ? "ml-auto" : "mx-auto";
-  const style: React.CSSProperties = { background: background(t), fontFamily: `"${t.font}", system-ui, sans-serif`, color: t.answerColor };
+  const style: React.CSSProperties = {
+    background: background(t),
+    fontFamily: `"${t.font}", system-ui, sans-serif`,
+    color: t.answerColor,
+  };
 
   if (revealing) {
     return (
@@ -281,7 +333,15 @@ export default function FormRunner({ formId, doc, preview }: Props) {
         <link rel="stylesheet" href={fontHref(t.font)} />
         <AnimatedBackdrop acc={t.buttonColor} />
         {preview && <PreviewBar />}
-        <ScalaDiagnosis doc={doc} field={field} vars={vars} utm={utm} responseId={savedId} formId={formId} preview={preview} />
+        <ScalaDiagnosis
+          doc={doc}
+          field={field}
+          vars={vars}
+          utm={utm}
+          responseId={savedId}
+          formId={formId}
+          preview={preview}
+        />
       </div>
     );
   }
@@ -293,7 +353,10 @@ export default function FormRunner({ formId, doc, preview }: Props) {
       {preview && <PreviewBar />}
       {field?.type !== "welcome" && (
         <div className="fixed left-0 top-0 z-10 h-1 w-full" style={{ background: alpha(t.answerColor, 0.12) }}>
-          <div className="h-full transition-all duration-500" style={{ width: `${progress * 100}%`, background: t.buttonColor }} />
+          <div
+            className="h-full transition-all duration-500"
+            style={{ width: `${progress * 100}%`, background: t.buttonColor }}
+          />
         </div>
       )}
       <div className="px-5 pt-8 sm:px-10">
@@ -309,7 +372,10 @@ export default function FormRunner({ formId, doc, preview }: Props) {
               value={answers[field.id]}
               error={error}
               seed={seed}
-              onChange={(v) => { setAnswers((a) => ({ ...a, [field.id]: v })); setError(""); }}
+              onChange={(v) => {
+                setAnswers((a) => ({ ...a, [field.id]: v }));
+                setError("");
+              }}
               onSubmit={submit}
               score={computeScore(doc, answers)}
               onEndAction={endAction}
@@ -329,7 +395,9 @@ export default function FormRunner({ formId, doc, preview }: Props) {
 function EndButton({ f, btn, onClick }: { f: Field; btn: React.CSSProperties; onClick: () => void }) {
   const kind = afterOf(f);
   const ready =
-    (kind === "button_link" && f.buttonUrl) || (kind === "button_whatsapp" && f.whatsappNumber) || (kind === "button_file" && f.fileUrl);
+    (kind === "button_link" && f.buttonUrl) ||
+    (kind === "button_whatsapp" && f.whatsappNumber) ||
+    (kind === "button_file" && f.fileUrl);
   if (!ready) return null;
   const wa = kind === "button_whatsapp";
   return (
@@ -352,7 +420,11 @@ function EndButton({ f, btn, onClick }: { f: Field; btn: React.CSSProperties; on
 }
 
 function PreviewBar() {
-  return <div className="sticky top-0 z-20 bg-amber-400 px-4 py-1.5 text-center text-sm font-medium text-black">Pré-visualização do rascunho: as respostas não são salvas.</div>;
+  return (
+    <div className="sticky top-0 z-20 bg-amber-400 px-4 py-1.5 text-center text-sm font-medium text-black">
+      Pré-visualização do rascunho: as respostas não são salvas.
+    </div>
+  );
 }
 
 /* Botão de entrada do diagnóstico (só a 1ª tela, sem histórico de navegação ainda). Uma luz
@@ -360,7 +432,19 @@ function PreviewBar() {
  * contorno de verdade, em velocidade constante, sem distorcer nos cantos ou no lado mais comprido
  * de um botão retangular. Mede o próprio tamanho via ResizeObserver pra desenhar o retângulo certo.
  * No hover (só desktop): pulsa pra frente e troca de laranja pra preto (texto vira laranja). */
-function EntryButton({ label, acc, color, radius, onClick }: { label: string; acc: string; color: string; radius: number; onClick: () => void }) {
+function EntryButton({
+  label,
+  acc,
+  color,
+  radius,
+  onClick,
+}: {
+  label: string;
+  acc: string;
+  color: string;
+  radius: number;
+  onClick: () => void;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
   useEffect(() => {
@@ -391,8 +475,15 @@ function EntryButton({ label, acc, color, radius, onClick }: { label: string; ac
       {w > 0 && h > 0 && (
         <svg width={w} height={h} className="pointer-events-none absolute left-0 top-0 block">
           <rect
-            x={stroke / 2} y={stroke / 2} width={w - stroke} height={h - stroke} rx={r}
-            fill="none" stroke={raceColor} strokeWidth={stroke} strokeLinecap="round"
+            x={stroke / 2}
+            y={stroke / 2}
+            width={w - stroke}
+            height={h - stroke}
+            rx={r}
+            fill="none"
+            stroke={raceColor}
+            strokeWidth={stroke}
+            strokeLinecap="round"
             strokeDasharray={`${dash} ${Math.max(0, perimeter - dash)}`}
             className="sf-race-dash"
             style={{ filter: `drop-shadow(0 0 5px ${raceColor})` }}
@@ -424,17 +515,35 @@ type ViewProps = {
   canBack: boolean;
 };
 
-function FieldView({ field: f, theme: t, vars, value, error, seed, onChange, onSubmit, score, onEndAction, onBack, canBack }: ViewProps) {
+function FieldView({
+  field: f,
+  theme: t,
+  vars,
+  value,
+  error,
+  seed,
+  onChange,
+  onSubmit,
+  score,
+  onEndAction,
+  onBack,
+  canBack,
+}: ViewProps) {
   const centered = f.type === "welcome" || f.type === "thankyou";
   const btn: React.CSSProperties = { background: t.buttonColor, color: onColor(t.buttonColor), borderRadius: t.radius };
   const title = interpolate(f.title, vars);
   const desc = interpolate(f.description ?? "", vars);
   const inputRef = useRef<HTMLInputElement & HTMLTextAreaElement>(null);
-  const opts = useMemo(() => (f.shuffle ? shuffled(f.options ?? [], seed + f.id) : f.options ?? []), [f.options, f.shuffle, f.id, seed]);
+  const opts = useMemo(
+    () => (f.shuffle ? shuffled(f.options ?? [], seed + f.id) : (f.options ?? [])),
+    [f.options, f.shuffle, f.id, seed],
+  );
   const chosen = value && typeof value !== "string" ? value.options : [];
-  const other = value && typeof value !== "string" ? value.other ?? "" : "";
+  const other = value && typeof value !== "string" ? (value.other ?? "") : "";
 
-  useEffect(() => { inputRef.current?.focus({ preventScroll: true }); }, [f.id]);
+  useEffect(() => {
+    inputRef.current?.focus({ preventScroll: true });
+  }, [f.id]);
 
   const pick = (oid: string) => {
     if (f.multiple) {
@@ -465,11 +574,21 @@ function FieldView({ field: f, theme: t, vars, value, error, seed, onChange, onS
   return (
     <div className={centered ? "text-center" : ""}>
       <MediaView media={f.media} wide={!centered} />
-      <h1 className={`font-bold leading-tight ${f.type === "welcome" ? "text-[clamp(28px,5.5vw,46px)]" : "text-[clamp(22px,4vw,32px)]"}`} style={{ color: t.questionColor, whiteSpace: "pre-line" }}>
+      <h1
+        className={`font-bold leading-tight ${f.type === "welcome" ? "text-[clamp(28px,5.5vw,46px)]" : "text-[clamp(22px,4vw,32px)]"}`}
+        style={{ color: t.questionColor, whiteSpace: "pre-line" }}
+      >
         {title}
         {f.required && !centered && <span className="opacity-60"> *</span>}
       </h1>
-      {desc && <p className="mt-3 text-[clamp(15px,2.2vw,19px)] leading-relaxed" style={{ color: alpha(t.questionColor, 0.72), whiteSpace: "pre-line" }}>{desc}</p>}
+      {desc && (
+        <p
+          className="mt-3 text-[clamp(15px,2.2vw,19px)] leading-relaxed"
+          style={{ color: alpha(t.questionColor, 0.72), whiteSpace: "pre-line" }}
+        >
+          {desc}
+        </p>
+      )}
 
       {f.type === "multiple_choice" && (
         <div className={`mt-8 ${f.sameLine ? "grid grid-cols-1 gap-3 sm:grid-cols-2" : "space-y-3"}`}>
@@ -480,9 +599,11 @@ function FieldView({ field: f, theme: t, vars, value, error, seed, onChange, onS
               <button
                 key={o.id}
                 onClick={() => pick(o.id)}
-                className={hasImage
-                  ? "sf-opt flex w-full flex-col overflow-hidden border text-left transition"
-                  : "sf-opt flex w-full items-center gap-3 border px-4 py-3.5 text-left text-[clamp(15px,2.2vw,18px)] transition"}
+                className={
+                  hasImage
+                    ? "sf-opt flex w-full flex-col overflow-hidden border text-left transition"
+                    : "sf-opt flex w-full items-center gap-3 border px-4 py-3.5 text-left text-[clamp(15px,2.2vw,18px)] transition"
+                }
                 style={{
                   borderColor: on ? t.buttonColor : alpha(t.answerColor, 0.6),
                   background: on ? alpha(t.buttonColor, 0.18) : alpha(t.answerColor, 0.04),
@@ -490,12 +611,19 @@ function FieldView({ field: f, theme: t, vars, value, error, seed, onChange, onS
                   color: t.answerColor,
                 }}
               >
-                {hasImage && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={o.image} alt="" className="aspect-[4/3] w-full object-cover" />
-                )}
-                <span className={hasImage ? "flex w-full items-center gap-3 px-4 py-3.5 text-[clamp(15px,2.2vw,18px)]" : "contents"}>
-                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-sm" style={{ background: on ? t.buttonColor : alpha(t.answerColor, 0.15), color: on ? onColor(t.buttonColor) : t.answerColor }}>
+                {hasImage && <img src={o.image} alt="" className="aspect-[4/3] w-full object-cover" />}
+                <span
+                  className={
+                    hasImage ? "flex w-full items-center gap-3 px-4 py-3.5 text-[clamp(15px,2.2vw,18px)]" : "contents"
+                  }
+                >
+                  <span
+                    className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-sm"
+                    style={{
+                      background: on ? t.buttonColor : alpha(t.answerColor, 0.15),
+                      color: on ? onColor(t.buttonColor) : t.answerColor,
+                    }}
+                  >
                     {on && f.multiple ? "✓" : LETTERS[i]}
                   </span>
                   {o.label}
@@ -513,25 +641,37 @@ function FieldView({ field: f, theme: t, vars, value, error, seed, onChange, onS
             />
           )}
           {(f.multiple || f.allowOther) && (
-            <button onClick={() => onSubmit()} className="mt-3 px-6 py-3 font-semibold" style={btn}>OK ✓</button>
+            <button onClick={() => onSubmit()} className="mt-3 px-6 py-3 font-semibold" style={btn}>
+              OK ✓
+            </button>
           )}
         </div>
       )}
 
       {["name", "short_text", "email", "phone", "number"].includes(f.type) && (
-        <form className="mt-8" onSubmit={(e) => { e.preventDefault(); onSubmit(); }}>
+        <form
+          className="mt-8"
+          onSubmit={(e) => {
+            e.preventDefault();
+            onSubmit();
+          }}
+        >
           <input
             ref={inputRef}
             type={f.type === "email" ? "email" : f.type === "phone" ? "tel" : f.type === "number" ? "text" : "text"}
             inputMode={f.type === "phone" || f.type === "number" ? "numeric" : undefined}
-            autoComplete={f.type === "name" ? "given-name" : f.type === "email" ? "email" : f.type === "phone" ? "tel" : "off"}
+            autoComplete={
+              f.type === "name" ? "given-name" : f.type === "email" ? "email" : f.type === "phone" ? "tel" : "off"
+            }
             value={typeof value === "string" ? value : ""}
             onChange={(e) => onChange(e.target.value)}
             placeholder={f.placeholder}
             className="w-full border-b-2 bg-transparent pb-2 text-[clamp(20px,3.6vw,28px)] outline-none placeholder:opacity-40"
             style={{ borderColor: alpha(t.answerColor, 0.5), color: t.answerColor }}
           />
-          <button className="mt-6 px-6 py-3 font-semibold" style={btn}>{f.buttonLabel || "OK ✓"}</button>
+          <button className="mt-6 px-6 py-3 font-semibold" style={btn}>
+            {f.buttonLabel || "OK ✓"}
+          </button>
           <span className="ml-3 hidden text-sm opacity-50 sm:inline">ou pressione Enter ↵</span>
         </form>
       )}
@@ -547,31 +687,58 @@ function FieldView({ field: f, theme: t, vars, value, error, seed, onChange, onS
             className="w-full border-b-2 bg-transparent pb-2 text-xl outline-none placeholder:opacity-40"
             style={{ borderColor: alpha(t.answerColor, 0.5), color: t.answerColor }}
           />
-          <button onClick={() => onSubmit()} className="mt-6 px-6 py-3 font-semibold" style={btn}>OK ✓</button>
+          <button onClick={() => onSubmit()} className="mt-6 px-6 py-3 font-semibold" style={btn}>
+            OK ✓
+          </button>
         </div>
       )}
 
-      {error && <p className="mt-4 inline-block rounded px-3 py-1.5 text-sm" style={{ background: "#fde2e2", color: "#b42318" }}>{error}</p>}
+      {error && (
+        <p
+          className="mt-4 inline-block rounded px-3 py-1.5 text-sm"
+          style={{ background: "#fde2e2", color: "#b42318" }}
+        >
+          {error}
+        </p>
+      )}
 
       {!centered && canBack && (
-        <button onClick={onBack} className="mt-6 block text-sm underline-offset-2 hover:underline" style={{ color: alpha(t.answerColor, 0.55) }}>
+        <button
+          onClick={onBack}
+          className="mt-6 block text-sm underline-offset-2 hover:underline"
+          style={{ color: alpha(t.answerColor, 0.55) }}
+        >
           ← Voltar
         </button>
       )}
 
-      {f.type === "welcome" && (
-        !canBack
-          ? <EntryButton label={f.buttonLabel || "Começar"} acc={t.buttonColor} color={onColor(t.buttonColor)} radius={t.radius} onClick={() => onSubmit()} />
-          : (
-            <button onClick={() => onSubmit()} className="mt-10 px-9 py-4 text-lg font-semibold shadow-lg transition hover:brightness-110" style={btn}>
-              {f.buttonLabel || "Começar"}
-            </button>
-          )
-      )}
+      {f.type === "welcome" &&
+        (!canBack ? (
+          <EntryButton
+            label={f.buttonLabel || "Começar"}
+            acc={t.buttonColor}
+            color={onColor(t.buttonColor)}
+            radius={t.radius}
+            onClick={() => onSubmit()}
+          />
+        ) : (
+          <button
+            onClick={() => onSubmit()}
+            className="mt-10 px-9 py-4 text-lg font-semibold shadow-lg transition hover:brightness-110"
+            style={btn}
+          >
+            {f.buttonLabel || "Começar"}
+          </button>
+        ))}
       {f.type === "thankyou" && f.showScore && (
-        <div className="mx-auto mt-8 inline-block rounded-xl px-8 py-4" style={{ background: alpha(t.answerColor, 0.08) }}>
+        <div
+          className="mx-auto mt-8 inline-block rounded-xl px-8 py-4"
+          style={{ background: alpha(t.answerColor, 0.08) }}
+        >
           <div className="text-sm opacity-70">Sua pontuação</div>
-          <div className="text-4xl font-extrabold" style={{ color: t.buttonColor }}>{score}</div>
+          <div className="text-4xl font-extrabold" style={{ color: t.buttonColor }}>
+            {score}
+          </div>
         </div>
       )}
       {f.type === "thankyou" && <EndButton f={f} btn={btn} onClick={() => onEndAction(f)} />}

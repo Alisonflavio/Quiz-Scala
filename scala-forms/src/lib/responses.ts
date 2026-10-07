@@ -1,11 +1,14 @@
+/* Respostas dos formulários: gravação (parcial/completa), consulta com filtros e disparo de webhook/planilha. */
 import "server-only";
 import { nanoid } from "nanoid";
 import { json, query, queryOne } from "./db";
 import { answerText, answerValue, computeScore, temperatureFor, variables } from "./engine";
 import { respondiPayload } from "./respondi";
+import { safePostJson } from "./safe-fetch";
 import { computeScala } from "./scala";
 import type { AnswerValue, FormDoc, ResponseRow, Temperature } from "./types";
 
+/** Lista respostas do formulário, mais recentes primeiro. `q` busca texto em qualquer resposta; `temp` usa a temperatura manual quando existe. */
 export async function listResponses(formId: string, f: { status?: string; temp?: string; q?: string } = {}) {
   const rows = await query<ResponseRow>(
     `SELECT * FROM responses WHERE form_id = $1
@@ -96,8 +99,17 @@ export async function saveResponse(formId: string, formTitle: string, doc: FormD
        VALUES ($1, $2, (SELECT coalesce(max(number),0)+1 FROM responses WHERE form_id = $2),
                $3, $4::jsonb, $5, $6, $7, $8::jsonb, $9::jsonb, CASE WHEN $3 = 'complete' THEN now() END)
        RETURNING *`,
-      [id, formId, input.complete ? "complete" : "partial", json(input.answers), score, temperature,
-       input.endingId ?? null, json(input.utm ?? {}), json(input.meta ?? {})],
+      [
+        id,
+        formId,
+        input.complete ? "complete" : "partial",
+        json(input.answers),
+        score,
+        temperature,
+        input.endingId ?? null,
+        json(input.utm ?? {}),
+        json(input.meta ?? {}),
+      ],
     );
   } else {
     row = await queryOne<ResponseRow>(
@@ -121,24 +133,18 @@ export async function saveResponse(formId: string, formTitle: string, doc: FormD
 }
 
 async function post(url: string, body: unknown) {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 8000);
   try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-      signal: ctrl.signal,
-      redirect: "follow",
-    });
+    const res = await safePostJson(url, body, 8000);
     return { ok: res.ok, status: res.status };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
-  } finally {
-    clearTimeout(t);
   }
 }
 
+/**
+ * Envia a resposta ao webhook e à planilha ativos e registra o resultado em `webhook_log`.
+ * No formato "respondi" só envia na conclusão (`evento === "completa"`).
+ */
 export async function dispatchIntegrations(doc: FormDoc, r: ResponseRow, formTitle: string, evento: string) {
   const s = doc.settings;
   const flat = { evento, ...flatten(doc, r, formTitle) };
@@ -148,16 +154,21 @@ export async function dispatchIntegrations(doc: FormDoc, r: ResponseRow, formTit
   const asRespondi = s.webhook.format === "respondi";
   if (s.webhook.enabled && s.webhook.url && (!asRespondi || evento === "completa")) {
     const body = asRespondi ? respondiPayload(doc, r, formTitle, flat) : flat;
-    jobs.push(post(s.webhook.url, body).then((x) => void log.push({ at: new Date().toISOString(), target: "webhook", ...x })));
+    jobs.push(
+      post(s.webhook.url, body).then((x) => void log.push({ at: new Date().toISOString(), target: "webhook", ...x })),
+    );
   }
   if (s.sheets.enabled && s.sheets.url) {
-    jobs.push(post(s.sheets.url, flat).then((x) => void log.push({ at: new Date().toISOString(), target: "planilha", ...x })));
+    jobs.push(
+      post(s.sheets.url, flat).then((x) => void log.push({ at: new Date().toISOString(), target: "planilha", ...x })),
+    );
   }
   if (!jobs.length) return;
   await Promise.all(jobs);
   await query("UPDATE responses SET webhook_log = webhook_log || $2::jsonb WHERE id = $1", [r.id, json(log)]);
 }
 
+/** `true` se já existe resposta *completa* com o mesmo valor no campo (sem diferenciar maiúsculas), ignorando `exceptId`. */
 export async function isDuplicate(formId: string, fieldId: string, value: string, exceptId?: string) {
   const r = await queryOne<{ n: number }>(
     `SELECT count(*)::int AS n FROM responses

@@ -1,6 +1,12 @@
 "use client";
 import { useActionState, useTransition } from "react";
-import { addMemberAction, removeMemberAction, setRoleAction, updateAccountAction, type TeamState } from "@/app/dash/actions";
+import {
+  addMemberAction,
+  removeMemberAction,
+  setRoleAction,
+  updateAccountAction,
+  type TeamState,
+} from "@/app/dash/actions";
 
 export function AddMember() {
   const [state, run, pending] = useActionState<TeamState, FormData>(addMemberAction, {});
@@ -15,7 +21,9 @@ export function AddMember() {
         <option value="admin">Administrador: também gerencia o time</option>
       </select>
       <div className="flex items-center gap-3 sm:col-span-2">
-        <button className="btn-primary" disabled={pending}>{pending ? "Adicionando..." : "Adicionar"}</button>
+        <button className="btn-primary" disabled={pending}>
+          {pending ? "Adicionando..." : "Adicionar"}
+        </button>
         {state.error && <span className="text-sm text-rose-400">{state.error}</span>}
         {state.ok && <span className="text-sm text-emerald-400">{state.ok}</span>}
       </div>
@@ -23,13 +31,29 @@ export function AddMember() {
   );
 }
 
-export function MemberRow({ id, name, email, role, isMe }: { id: string; name: string; email: string; role: "admin" | "member"; isMe: boolean }) {
+export function MemberRow({
+  id,
+  name,
+  email,
+  role,
+  isMe,
+}: {
+  id: string;
+  name: string;
+  email: string;
+  role: "admin" | "member";
+  isMe: boolean;
+}) {
   const [pending, start] = useTransition();
   return (
     <div className="flex items-center gap-4 border-b border-gray-100 py-4">
-      <span className="grid h-10 w-10 place-items-center rounded-full bg-violet-700 text-sm text-white">{name.slice(0, 2)}</span>
+      <span className="grid h-10 w-10 place-items-center rounded-full bg-violet-700 text-sm text-white">
+        {name.slice(0, 2)}
+      </span>
       <div className="min-w-0 flex-1">
-        <div className="text-gray-800">{name} {isMe && <span className="text-sm text-gray-400">(você)</span>}</div>
+        <div className="text-gray-800">
+          {name} {isMe && <span className="text-sm text-gray-400">(você)</span>}
+        </div>
         <div className="text-sm text-gray-500">{email}</div>
       </div>
       <select
@@ -42,7 +66,13 @@ export function MemberRow({ id, name, email, role, isMe }: { id: string; name: s
         <option value="admin">Administrador</option>
       </select>
       {!isMe && (
-        <button className="text-sm text-rose-400 hover:underline" disabled={pending} onClick={() => { if (confirm(`Remover ${name} do time?`)) start(() => removeMemberAction(id)); }}>
+        <button
+          className="text-sm text-rose-400 hover:underline"
+          disabled={pending}
+          onClick={() => {
+            if (confirm(`Remover ${name} do time?`)) start(() => removeMemberAction(id));
+          }}
+        >
           Remover
         </button>
       )}
@@ -54,15 +84,23 @@ export function AccountForm({ name, email }: { name: string; email: string }) {
   const [state, run, pending] = useActionState<TeamState, FormData>(updateAccountAction, {});
   return (
     <form action={run} className="space-y-6">
-      <label className="block"><span className="text-xl text-gray-800">Nome</span><input name="name" defaultValue={name} className="input mt-2 py-3 text-lg" /></label>
-      <label className="block"><span className="text-xl text-gray-800">E-mail</span><input value={email} disabled className="input mt-2 bg-gray-50 py-3 text-lg text-gray-500" /></label>
+      <label className="block">
+        <span className="text-xl text-gray-800">Nome</span>
+        <input name="name" defaultValue={name} className="input mt-2 py-3 text-lg" />
+      </label>
+      <label className="block">
+        <span className="text-xl text-gray-800">E-mail</span>
+        <input value={email} disabled className="input mt-2 bg-gray-50 py-3 text-lg text-gray-500" />
+      </label>
       <label className="block">
         <span className="text-xl text-gray-800">Nova senha</span>
         <span className="block text-gray-600">Deixe em branco para manter a atual.</span>
         <input name="password" type="password" className="input mt-2 py-3 text-lg" autoComplete="new-password" />
       </label>
       <div className="flex items-center gap-3">
-        <button className="btn-primary" disabled={pending}>Atualizar</button>
+        <button className="btn-primary" disabled={pending}>
+          Atualizar
+        </button>
         {state.error && <span className="text-sm text-rose-400">{state.error}</span>}
         {state.ok && <span className="text-sm text-emerald-400">{state.ok}</span>}
       </div>

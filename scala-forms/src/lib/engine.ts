@@ -1,6 +1,7 @@
 /* Regras do formulário usadas tanto no navegador (quiz) quanto no servidor (respostas e webhook). */
 import type { AnswerValue, Field, FormDoc, Temperature, TemperatureRules } from "./types";
 
+/** Ids das opções marcadas numa resposta; lista vazia para texto livre ou sem resposta. */
 export function optionIds(v: AnswerValue | undefined): string[] {
   if (!v || typeof v === "string") return [];
   return v.options;
@@ -17,7 +18,9 @@ export function computeScore(doc: FormDoc, answers: Record<string, AnswerValue>)
     }
     if (f.type === "number" && f.scoreThresholds?.length) {
       const v = answers[f.id];
-      const n = typeof v === "string" ? Number(v) : NaN;
+      // mesma regra do validateAnswer: aceita vírgula decimal; texto em branco não vale 0
+      const txt = typeof v === "string" ? v.trim().replace(",", ".") : "";
+      const n = txt ? Number(txt) : NaN;
       if (!isNaN(n)) {
         const hit = f.scoreThresholds.find((t) => n >= t.min && n <= t.max);
         if (hit) total += Number(hit.points) || 0;
@@ -41,6 +44,11 @@ export function maxScore(doc: FormDoc): number {
   return total;
 }
 
+/**
+ * Classifica a pontuação em frio/morno/quente.
+ * Limites inclusivos: `score <= coldMax` é frio, `score <= warmMax` é morno, acima disso é quente.
+ * @returns `null` quando a temperatura está desativada no formulário.
+ */
 export function temperatureFor(score: number, rules: TemperatureRules): Temperature | null {
   if (!rules.enabled) return null;
   if (score <= rules.coldMax) return "frio";
@@ -77,7 +85,7 @@ export function answerValue(field: Field, v: AnswerValue | undefined): string {
   return vals.join(", ");
 }
 
-/** Mapa variável → valor, para textos com {{variavel}}, webhook e resultados */
+/** Mapa variável -> valor, para textos com {{variavel}}, webhook e resultados */
 export function variables(doc: FormDoc, answers: Record<string, AnswerValue>) {
   const vars: Record<string, string> = {};
   for (const f of doc.fields) {
@@ -87,6 +95,7 @@ export function variables(doc: FormDoc, answers: Record<string, AnswerValue>) {
   return vars;
 }
 
+/** Troca `{{variavel}}` pelo valor em `vars`; variável desconhecida vira texto vazio. */
 export function interpolate(text: string, vars: Record<string, string>) {
   return text.replace(/\{\{\s*([\w.-]+)\s*\}\}/g, (_, k) => vars[k] ?? "");
 }
@@ -96,11 +105,7 @@ export function interpolate(text: string, vars: Record<string, string>) {
  * Aplica a lógica do campo atual (por resposta ou por pontos); sem regra que bata, segue a ordem.
  * Retorna null quando não há mais nada (fim sem tela de agradecimento).
  */
-export function nextFieldId(
-  doc: FormDoc,
-  currentId: string,
-  answers: Record<string, AnswerValue>,
-): string | null {
+export function nextFieldId(doc: FormDoc, currentId: string, answers: Record<string, AnswerValue>): string | null {
   const idx = doc.fields.findIndex((f) => f.id === currentId);
   const field = doc.fields[idx];
   if (!field) return null;
@@ -112,7 +117,9 @@ export function nextFieldId(
     for (const r of field.logic) {
       const hit =
         r.kind === "answer"
-          ? r.op === "is" ? chosen.includes(r.optionId) : !chosen.includes(r.optionId)
+          ? r.op === "is"
+            ? chosen.includes(r.optionId)
+            : !chosen.includes(r.optionId)
           : score >= r.min && score <= r.max;
       if (hit && r.goTo && doc.fields.some((f) => f.id === r.goTo)) return r.goTo;
     }
@@ -121,12 +128,17 @@ export function nextFieldId(
   return nxt ? nxt.id : null;
 }
 
+/** `true` se a pessoa respondeu (texto não vazio, ou ao menos uma opção/"outros"). */
 export function isAnswered(field: Field, v: AnswerValue | undefined) {
   if (v === undefined || v === null) return false;
   if (typeof v === "string") return v.trim().length > 0;
   return v.options.length > 0 || !!v.other?.trim();
 }
 
+/**
+ * Valida a resposta de um campo.
+ * @returns mensagem de erro para exibir, ou string vazia quando válida.
+ */
 export function validateAnswer(field: Field, v: AnswerValue | undefined): string {
   if (!isAnswered(field, v)) return field.required ? "Este campo é obrigatório." : "";
   if (typeof v !== "string") return "";
@@ -141,4 +153,5 @@ export function validateAnswer(field: Field, v: AnswerValue | undefined): string
   return "";
 }
 
+/** Parâmetros de campanha capturados da URL e salvos junto com a resposta. */
 export const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "gclid", "fbclid"];

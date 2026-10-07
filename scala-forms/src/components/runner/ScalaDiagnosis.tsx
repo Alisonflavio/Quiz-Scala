@@ -9,18 +9,41 @@ import { trackEvent } from "./trackers";
 
 function Tag({ acc, children }: { acc: string; children: React.ReactNode }) {
   return (
-    <span className="mb-5 inline-block rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-wider" style={{ background: alpha(acc, 0.15), color: acc, border: `1px solid ${alpha(acc, 0.4)}` }}>
+    <span
+      className="mb-5 inline-block rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-wider"
+      style={{ background: alpha(acc, 0.15), color: acc, border: `1px solid ${alpha(acc, 0.4)}` }}
+    >
       {children}
     </span>
   );
 }
 
-function Num({ label, value, sub, color, muted }: { label: string; value: string; sub?: string; color?: string; muted: string }) {
+function Num({
+  label,
+  value,
+  sub,
+  color,
+  muted,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  color?: string;
+  muted: string;
+}) {
   return (
     <div className="rounded-xl p-3.5" style={{ background: alpha(muted, 0.08) }}>
-      <span className="block text-xs" style={{ color: alpha(muted, 0.6) }}>{label}</span>
-      <b className="block text-[17px] leading-tight" style={{ color }}>{value}</b>
-      {sub && <span className="block text-xs" style={{ color: alpha(muted, 0.6) }}>{sub}</span>}
+      <span className="block text-xs" style={{ color: alpha(muted, 0.6) }}>
+        {label}
+      </span>
+      <b className="block text-[17px] leading-tight" style={{ color }}>
+        {value}
+      </b>
+      {sub && (
+        <span className="block text-xs" style={{ color: alpha(muted, 0.6) }}>
+          {sub}
+        </span>
+      )}
     </div>
   );
 }
@@ -32,7 +55,16 @@ const GOAL_GREEN = "#2FBF71";
  * foi "andada" mudam. Y vai de 16 (topo) a 172 (base); o viewBox tem espaço extra acima
  * (y negativo) pra caber a altura do bonequinho sem cortar a cabeça dele. */
 const PATH_POINTS: [number, number][] = [
-  [12, 172], [55, 150], [85, 160], [120, 118], [150, 128], [185, 90], [215, 100], [250, 55], [280, 68], [328, 16],
+  [12, 172],
+  [55, 150],
+  [85, 160],
+  [120, 118],
+  [150, 128],
+  [185, 90],
+  [215, 100],
+  [250, 55],
+  [280, 68],
+  [328, 16],
 ];
 const PATH_D = PATH_POINTS.map((p, i) => `${i === 0 ? "M" : "L"}${p[0]},${p[1]}`).join(" ");
 const VIEW_TOP = -78; // espaço reservado acima do ponto mais alto da linha (y=16): bonequinho + o número acima dele
@@ -45,7 +77,8 @@ function pointAt(frac: number): { x: number; y: number } {
   const i0 = Math.min(n - 1, Math.floor(raw));
   const i1 = i0 + 1;
   const f = raw - i0;
-  const [x0, y0] = PATH_POINTS[i0], [x1, y1] = PATH_POINTS[i1];
+  const [x0, y0] = PATH_POINTS[i0],
+    [x1, y1] = PATH_POINTS[i1];
   return { x: x0 + (x1 - x0) * f, y: y0 + (y1 - y0) * f };
 }
 
@@ -57,7 +90,8 @@ function pointAt(frac: number): { x: number; y: number } {
  * enquanto a outra volta), em vez de balançar junto como um bloco só (o que parecia nadar, não
  * caminhar). Cada parte vira uma "máscara" pintada da cor certa por cima, pra trocar entre
  * laranja e verde sem precisar de imagens duplicadas por cor. */
-const WALKER_W = 15, WALKER_H = WALKER_W * (240 / 74); // proporção real do recorte original (74x240px)
+const WALKER_W = 15,
+  WALKER_H = WALKER_W * (240 / 74); // proporção real do recorte original (74x240px)
 const TOP_H = WALKER_W * (170 / 74);
 const LEGS_H = WALKER_W * (100 / 74);
 const LEGS_Y = WALKER_H - LEGS_H;
@@ -86,18 +120,54 @@ function Walker({ color, uid, walking }: { color: string; uid: string; walking: 
       <mask id={maskTop}>
         <image href="/scala/walker-top.png" width={WALKER_W} height={TOP_H} preserveAspectRatio="none" />
       </mask>
-      <rect width={WALKER_W} height={TOP_H} fill={color} mask={`url(#${maskTop})`} style={{ transition: "fill .6s ease" }} />
+      <rect
+        width={WALKER_W}
+        height={TOP_H}
+        fill={color}
+        mask={`url(#${maskTop})`}
+        style={{ transition: "fill .6s ease" }}
+      />
       <g className={walking ? `sf-legL-${uid}` : undefined} style={legStyle(0)}>
         <mask id={maskLegL}>
-          <image href="/scala/walker-leg-left.png" x={0} y={LEGS_Y} width={LEG_PIECE_W} height={LEGS_H} preserveAspectRatio="none" />
+          <image
+            href="/scala/walker-leg-left.png"
+            x={0}
+            y={LEGS_Y}
+            width={LEG_PIECE_W}
+            height={LEGS_H}
+            preserveAspectRatio="none"
+          />
         </mask>
-        <rect x={0} y={LEGS_Y} width={LEG_PIECE_W} height={LEGS_H} fill={color} mask={`url(#${maskLegL})`} style={{ transition: "fill .6s ease" }} />
+        <rect
+          x={0}
+          y={LEGS_Y}
+          width={LEG_PIECE_W}
+          height={LEGS_H}
+          fill={color}
+          mask={`url(#${maskLegL})`}
+          style={{ transition: "fill .6s ease" }}
+        />
       </g>
       <g className={walking ? `sf-legR-${uid}` : undefined} style={legStyle(WALKER_W)}>
         <mask id={maskLegR}>
-          <image href="/scala/walker-leg-right.png" x={WALKER_W - LEG_PIECE_W} y={LEGS_Y} width={LEG_PIECE_W} height={LEGS_H} preserveAspectRatio="none" />
+          <image
+            href="/scala/walker-leg-right.png"
+            x={WALKER_W - LEG_PIECE_W}
+            y={LEGS_Y}
+            width={LEG_PIECE_W}
+            height={LEGS_H}
+            preserveAspectRatio="none"
+          />
         </mask>
-        <rect x={WALKER_W - LEG_PIECE_W} y={LEGS_Y} width={LEG_PIECE_W} height={LEGS_H} fill={color} mask={`url(#${maskLegR})`} style={{ transition: "fill .6s ease" }} />
+        <rect
+          x={WALKER_W - LEG_PIECE_W}
+          y={LEGS_Y}
+          width={LEG_PIECE_W}
+          height={LEGS_H}
+          fill={color}
+          mask={`url(#${maskLegR})`}
+          style={{ transition: "fill .6s ease" }}
+        />
       </g>
     </g>
   );
@@ -119,20 +189,45 @@ function ScoreMeter({ score, muted, track, text }: { score: number; muted: strin
       if (p >= 1) clearInterval(id);
     }, 40);
     const safety = setTimeout(() => setVal(score), 1500);
-    return () => { clearTimeout(kick); clearInterval(id); clearTimeout(safety); };
+    return () => {
+      clearTimeout(kick);
+      clearInterval(id);
+      clearTimeout(safety);
+    };
   }, [score]);
   return (
-    <div className="mb-7 p-5" style={{ border: `2px solid ${color}`, background: alpha(color, 0.08), borderRadius: 18 }}>
+    <div
+      className="mb-7 p-5"
+      style={{ border: `2px solid ${color}`, background: alpha(color, 0.08), borderRadius: 18 }}
+    >
       <div className="flex items-center justify-between">
-        <span className="text-sm font-bold uppercase tracking-wider" style={{ color: muted }}>Seu score</span>
-        <span className="rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider" style={{ background: alpha(color, 0.18), color }}>{label}</span>
+        <span className="text-sm font-bold uppercase tracking-wider" style={{ color: muted }}>
+          Seu score
+        </span>
+        <span
+          className="rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider"
+          style={{ background: alpha(color, 0.18), color }}
+        >
+          {label}
+        </span>
       </div>
       <div className="mt-1 flex items-baseline gap-1.5">
-        <b className="text-[56px] font-extrabold leading-none" style={{ color }}>{val}</b>
-        <span className="text-xl font-bold" style={{ color: text }}>/100</span>
+        <b className="text-[56px] font-extrabold leading-none" style={{ color }}>
+          {val}
+        </b>
+        <span className="text-xl font-bold" style={{ color: text }}>
+          /100
+        </span>
       </div>
       <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full" style={{ background: track }}>
-        <div className="h-full rounded-full" style={{ width: on ? `${score}%` : "0%", background: color, transition: "width 1.3s cubic-bezier(.2,.7,.2,1)" }} />
+        <div
+          className="h-full rounded-full"
+          style={{
+            width: on ? `${score}%` : "0%",
+            background: color,
+            transition: "width 1.3s cubic-bezier(.2,.7,.2,1)",
+          }}
+        />
       </div>
     </div>
   );
@@ -166,7 +261,11 @@ function ClimbChart({ current, goal, acc }: { current: number; goal: number; acc
     raf = requestAnimationFrame(tick);
     // garante o valor final mesmo se a aba ficar em 2º plano e o rAF acima nunca rodar
     const safety = setTimeout(() => setVal(goal), DUR + 300);
-    return () => { clearTimeout(kick); cancelAnimationFrame(raf); clearTimeout(safety); };
+    return () => {
+      clearTimeout(kick);
+      cancelAnimationFrame(raf);
+      clearTimeout(safety);
+    };
   }, [current, goal]);
 
   const done = val >= goal;
@@ -185,22 +284,52 @@ function ClimbChart({ current, goal, acc }: { current: number; goal: number; acc
          * mais simples e previsível do que animar stroke-dasharray/dashoffset (que, numa primeira
          * tentativa, não se comportou bem junto com as outras atualizações de estado). */}
         <clipPath id="climbClip" clipPathUnits="userSpaceOnUse">
-          <rect x="0" y={VIEW_TOP} width={on ? 340 : 0} height={VIEW_H} style={{ transition: `width ${DUR}ms linear` }} />
+          <rect
+            x="0"
+            y={VIEW_TOP}
+            width={on ? 340 : 0}
+            height={VIEW_H}
+            style={{ transition: `width ${DUR}ms linear` }}
+          />
         </clipPath>
       </defs>
-      <path d={PATH_D} fill="none" stroke="url(#climbGrad)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"
+      <path
+        d={PATH_D}
+        fill="none"
+        stroke="url(#climbGrad)"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         clipPath="url(#climbClip)"
         style={{ filter: `drop-shadow(0 0 5px ${alpha(acc, 0.65)})` }}
       />
       <g style={{ transform: `translate(${pos.x}px, ${pos.y}px)`, transition: `transform ${DUR}ms linear` }}>
-        <text x="0" y={-WALKER_H - 10} textAnchor="middle" fontSize="15" fontWeight="800" fill={color} style={{ transition: "fill .6s ease" }}>{brl(val)}</text>
+        <text
+          x="0"
+          y={-WALKER_H - 10}
+          textAnchor="middle"
+          fontSize="15"
+          fontWeight="800"
+          fill={color}
+          style={{ transition: "fill .6s ease" }}
+        >
+          {brl(val)}
+        </text>
         <Walker color={color} uid="climb" walking={!done} />
       </g>
     </svg>
   );
 }
 
-type Props = { doc: FormDoc; field: Field; vars: Record<string, string>; utm: Record<string, string>; responseId?: string; formId: string; preview: boolean };
+type Props = {
+  doc: FormDoc;
+  field: Field;
+  vars: Record<string, string>;
+  utm: Record<string, string>;
+  responseId?: string;
+  formId: string;
+  preview: boolean;
+};
 
 /*
  * Resultado do Diagnóstico Scala, em duas telas:
@@ -224,7 +353,11 @@ export default function ScalaDiagnosis({ doc, field, vars: initialVars, utm, res
       keepalive: true,
     });
   };
-  const go = (p: typeof page) => { setPage(p); if (p === "solution") setSound(false); scrollTo({ top: 0 }); };
+  const go = (p: typeof page) => {
+    setPage(p);
+    if (p === "solution") setSound(false);
+    scrollTo({ top: 0 });
+  };
 
   const [sound, setSound] = useState(false);
   const videoEl = useRef<HTMLVideoElement | null>(null);
@@ -263,9 +396,12 @@ export default function ScalaDiagnosis({ doc, field, vars: initialVars, utm, res
   if (!r) {
     return (
       <div className="mx-auto max-w-xl px-5 py-20 text-center">
-        <h1 className="text-2xl font-bold" style={{ color: t.questionColor }}>Obrigado, {vars.nome}!</h1>
+        <h1 className="text-2xl font-bold" style={{ color: t.questionColor }}>
+          Obrigado, {vars.nome}!
+        </h1>
         <p className="mt-3 opacity-70">
-          Para mostrar o diagnóstico, o formulário precisa das variáveis <code>renda</code>, <code>aumento</code> e <code>horas</code> com valores numéricos nas opções.
+          Para mostrar o diagnóstico, o formulário precisa das variáveis <code>renda</code>, <code>aumento</code> e{" "}
+          <code>horas</code> com valores numéricos nas opções.
         </p>
       </div>
     );
@@ -275,14 +411,22 @@ export default function ScalaDiagnosis({ doc, field, vars: initialVars, utm, res
   const nome = vars.nome || "";
   const text = alpha(t.answerColor, 0.88);
   const muted = alpha(t.answerColor, 0.6);
-  const card: React.CSSProperties = { background: alpha(t.answerColor, 0.05), border: `1px solid ${alpha(t.answerColor, 0.12)}`, borderRadius: 18 };
+  const card: React.CSSProperties = {
+    background: alpha(t.answerColor, 0.05),
+    border: `1px solid ${alpha(t.answerColor, 0.12)}`,
+    borderRadius: 18,
+  };
   const btn: React.CSSProperties = { background: acc, color: onColor(acc), borderRadius: 14 };
   const logo = t.logo && <img src={t.logo} alt="" className="mx-auto mb-10 h-8 max-w-[200px] object-contain" />;
 
   /* ---------- tela 2: a solução ---------- */
   if (page === "solution") {
     const msg = interpolate(cfg.whatsappMessage ?? SCALA_WA_MESSAGE, {
-      ...vars, ...utm, diagnostico: r.label, nivel: r.label, gargalo: d.area,
+      ...vars,
+      ...utm,
+      diagnostico: r.label,
+      nivel: r.label,
+      gargalo: d.area,
     }).replace(/\s+\(\)/g, "");
     const wa = `https://wa.me/${cfg.whatsapp}?text=${encodeURIComponent(msg)}`;
     const order = [d.entregavel, ...ENTREGAVEIS.map((_, i) => i).filter((i) => i !== d.entregavel)];
@@ -296,12 +440,18 @@ export default function ScalaDiagnosis({ doc, field, vars: initialVars, utm, res
 
         {cfg.videoUrl && (
           <div className="mb-8">
-            <h2 className="mb-3 text-lg font-extrabold" style={{ color: t.questionColor }}>Veja como o Reinaldo fez isso 👇</h2>
+            <h2 className="mb-3 text-lg font-extrabold" style={{ color: t.questionColor }}>
+              Veja como o Reinaldo fez isso 👇
+            </h2>
             <div className="relative mx-auto w-full max-w-[300px]">
               <video
                 ref={(el) => {
                   videoEl.current = el;
-                  if (el && !el.dataset.auto) { el.dataset.auto = "1"; el.muted = true; void el.play().catch(() => {}); }
+                  if (el && !el.dataset.auto) {
+                    el.dataset.auto = "1";
+                    el.muted = true;
+                    void el.play().catch(() => {});
+                  }
                 }}
                 controls
                 autoPlay
@@ -310,7 +460,12 @@ export default function ScalaDiagnosis({ doc, field, vars: initialVars, utm, res
                 preload="auto"
                 playsInline
                 poster={cfg.videoPoster || undefined}
-                onVolumeChange={(e) => { if (!e.currentTarget.muted && !sound) { setSound(true); onVideoPlay(); } }}
+                onVolumeChange={(e) => {
+                  if (!e.currentTarget.muted && !sound) {
+                    setSound(true);
+                    onVideoPlay();
+                  }
+                }}
                 onTimeUpdate={(e) => onVideoTime(e.currentTarget)}
                 className="block aspect-[9/16] w-full rounded-2xl bg-black object-cover"
               >
@@ -323,9 +478,22 @@ export default function ScalaDiagnosis({ doc, field, vars: initialVars, utm, res
                   onClick={() => videoEl.current && startSound(videoEl.current)}
                   className="absolute inset-x-0 top-0 bottom-14 grid place-items-center rounded-2xl"
                 >
-                  <span className="flex flex-col items-center gap-1.5 rounded-xl px-5 py-3 text-center shadow-xl" style={{ background: acc, color: onColor(acc) }}>
+                  <span
+                    className="flex flex-col items-center gap-1.5 rounded-xl px-5 py-3 text-center shadow-xl"
+                    style={{ background: acc, color: onColor(acc) }}
+                  >
                     <span className="text-xs font-bold">Seu vídeo já começou · 1 min</span>
-                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <svg
+                      width="30"
+                      height="30"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
                       <path d="M11 5 6 9H3v6h3l5 4V5z" fill="currentColor" />
                       <path d="m16 9 6 6M22 9l-6 6" />
                     </svg>
@@ -335,25 +503,39 @@ export default function ScalaDiagnosis({ doc, field, vars: initialVars, utm, res
               )}
             </div>
             <p className="mt-3 text-center text-[15px]" style={{ color: text }}>
-              Hoje: 20 alunos presenciais + 35 online.<br /><b style={{ color: acc }}>Quase R$ 25 mil por mês.</b>
+              Hoje: 20 alunos presenciais + 35 online.
+              <br />
+              <b style={{ color: acc }}>Quase R$ 25 mil por mês.</b>
             </p>
           </div>
         )}
 
         <div className="mb-8 p-5" style={card}>
-          <h2 className="mb-4 text-lg font-extrabold" style={{ color: t.questionColor }}>Na conversa gratuita:</h2>
+          <h2 className="mb-4 text-lg font-extrabold" style={{ color: t.questionColor }}>
+            Na conversa gratuita:
+          </h2>
           <ul className="space-y-3">
-            {order.map((i, n) => (
+            {order.map((i) => (
               <li key={i} className="flex gap-3 text-[15.5px] leading-snug" style={{ color: text }}>
-                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-sm font-bold" style={{ background: acc, color: onColor(acc) }}>✓</span>
+                <span
+                  className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-sm font-bold"
+                  style={{ background: acc, color: onColor(acc) }}
+                >
+                  ✓
+                </span>
                 <span>{ENTREGAVEIS[i]}</span>
               </li>
             ))}
           </ul>
         </div>
 
-        <div className="p-6 text-center" style={{ border: `2px solid ${acc}`, background: alpha(acc, 0.08), borderRadius: 20 }}>
-          <h2 className="mb-2 text-2xl font-extrabold" style={{ color: t.questionColor }}>Seu próximo passo</h2>
+        <div
+          className="p-6 text-center"
+          style={{ border: `2px solid ${acc}`, background: alpha(acc, 0.08), borderRadius: 20 }}
+        >
+          <h2 className="mb-2 text-2xl font-extrabold" style={{ color: t.questionColor }}>
+            Seu próximo passo
+          </h2>
           <p className="mb-5 text-[16px] leading-relaxed" style={{ color: text }}>
             Conversa <b>gratuita</b> de 20 min com um gestor da Scala.
           </p>
@@ -361,17 +543,26 @@ export default function ScalaDiagnosis({ doc, field, vars: initialVars, utm, res
             href={cfg.whatsapp ? wa : undefined}
             target="_blank"
             rel="noopener"
-            onClick={() => { event("clicou_whatsapp"); if (!preview) trackEvent(doc.settings, "Contact"); }}
+            onClick={() => {
+              event("clicou_whatsapp");
+              if (!preview) trackEvent(doc.settings, "Contact");
+            }}
             className="block px-5 py-4 text-lg font-bold shadow-lg"
             style={{ background: "#25D366", color: "#fff", borderRadius: 14, opacity: cfg.whatsapp ? 1 : 0.5 }}
           >
             Quero minha conversa gratuita
           </a>
-          {!cfg.whatsapp && <p className="mt-2 text-xs opacity-60">Configure o WhatsApp do especialista na tela final do editor.</p>}
+          {!cfg.whatsapp && (
+            <p className="mt-2 text-xs opacity-60">Configure o WhatsApp do especialista na tela final do editor.</p>
+          )}
         </div>
 
-        <p className="mt-8 text-center text-sm" style={{ color: muted }}>Treino muda o corpo. Método muda a carreira.</p>
-        <button onClick={() => go("problem")} className="mx-auto mt-4 block text-sm underline" style={{ color: muted }}>Voltar ao meu diagnóstico</button>
+        <p className="mt-8 text-center text-sm" style={{ color: muted }}>
+          Treino muda o corpo. Método muda a carreira.
+        </p>
+        <button onClick={() => go("problem")} className="mx-auto mt-4 block text-sm underline" style={{ color: muted }}>
+          Voltar ao meu diagnóstico
+        </button>
       </div>
     );
   }
@@ -387,64 +578,124 @@ export default function ScalaDiagnosis({ doc, field, vars: initialVars, utm, res
       <ScoreMeter score={r.score} muted={muted} track={alpha(t.answerColor, 0.12)} text={text} />
 
       <div className="mb-7 p-5" style={{ border: `2px solid ${acc}`, background: alpha(acc, 0.08), borderRadius: 18 }}>
-        <p className="mb-1.5 text-[15px]" style={{ color: text }}>Você precisa de um passo a passo para</p>
-        <h1 className="text-[28px] font-extrabold leading-tight" style={{ color: acc }}>{d.desejo}.</h1>
+        <p className="mb-1.5 text-[15px]" style={{ color: text }}>
+          Você precisa de um passo a passo para
+        </p>
+        <h1 className="text-[28px] font-extrabold leading-tight" style={{ color: acc }}>
+          {d.desejo}.
+        </h1>
       </div>
 
       <div className="mb-7 p-5" style={card}>
-        <h2 className="mb-1 text-sm font-bold uppercase tracking-wider" style={{ color: muted }}>Seus números</h2>
+        <h2 className="mb-1 text-sm font-bold uppercase tracking-wider" style={{ color: muted }}>
+          Seus números
+        </h2>
         <ClimbChart current={r.renda} goal={r.meta} acc={acc} />
         <div className="mt-2 grid grid-cols-1 gap-2.5">
           <Num label="Hoje você fatura" value={rendaLabel ?? `${brl(r.renda)}/mês`} muted={t.answerColor} />
           <Num label="Você atende hoje" value={horasLabel ?? `${r.horas}h/semana`} muted={t.answerColor} />
         </div>
         <p className="mt-4 text-[15.5px] leading-relaxed" style={{ color: text }}>
-          {r.fits
-            ? <>Vendendo hora, sua meta pede <b>{Math.round(r.hoursNeeded)}h por semana</b> (+{Math.round(r.hoursNeeded - r.horas)}h).</>
-            : <>Vendendo hora, sua meta pede <b>{Math.round(r.hoursNeeded)}h por semana</b>. Não cabe.</>}
+          {r.fits ? (
+            <>
+              Vendendo hora, sua meta pede <b>{Math.round(r.hoursNeeded)}h por semana</b> (+
+              {Math.round(r.hoursNeeded - r.horas)}h).
+            </>
+          ) : (
+            <>
+              Vendendo hora, sua meta pede <b>{Math.round(r.hoursNeeded)}h por semana</b>. Não cabe.
+            </>
+          )}
         </p>
       </div>
 
-      <div className="mb-7 p-5" style={{ border: `1px solid ${alpha(acc, 0.5)}`, background: alpha(acc, 0.06), borderRadius: 18 }}>
+      <div
+        className="mb-7 p-5"
+        style={{ border: `1px solid ${alpha(acc, 0.5)}`, background: alpha(acc, 0.06), borderRadius: 18 }}
+      >
         <Tag acc={acc}>Seu principal gargalo</Tag>
-        <p className="text-[17px] font-bold leading-snug" style={{ color: t.questionColor }}>{d.gargalo}</p>
+        <p className="text-[17px] font-bold leading-snug" style={{ color: t.questionColor }}>
+          {d.gargalo}
+        </p>
       </div>
 
       <div className="mb-7 p-5" style={card}>
-        <h2 className="mb-4 text-lg font-extrabold" style={{ color: t.questionColor }}>O que fazer agora</h2>
+        <h2 className="mb-4 text-lg font-extrabold" style={{ color: t.questionColor }}>
+          O que fazer agora
+        </h2>
         <ul className="space-y-3">
           {d.acoes.map((acao, i) => (
             <li key={i} className="flex gap-3 text-[15.5px] leading-snug" style={{ color: text }}>
-              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border text-xs font-bold" style={{ borderColor: alpha(acc, 0.5), color: acc }}>{i + 1}</span>
+              <span
+                className="grid h-6 w-6 shrink-0 place-items-center rounded-full border text-xs font-bold"
+                style={{ borderColor: alpha(acc, 0.5), color: acc }}
+              >
+                {i + 1}
+              </span>
               <span>{acao}</span>
             </li>
           ))}
         </ul>
       </div>
 
-      <div className="p-6 text-center" style={{ border: `2px solid ${acc}`, background: alpha(acc, 0.08), borderRadius: 20 }}>
-        <h2 className="mb-4 text-2xl font-extrabold" style={{ color: t.questionColor }}>Isso tem solução.</h2>
+      <div
+        className="p-6 text-center"
+        style={{ border: `2px solid ${acc}`, background: alpha(acc, 0.08), borderRadius: 20 }}
+      >
+        <h2 className="mb-4 text-2xl font-extrabold" style={{ color: t.questionColor }}>
+          Isso tem solução.
+        </h2>
         <button
-          onClick={() => { event("validou_sim"); if (!preview) trackEvent(doc.settings, "DiagnosticoConfirmado", true); go("solution"); }}
+          onClick={() => {
+            event("validou_sim");
+            if (!preview) trackEvent(doc.settings, "DiagnosticoConfirmado", true);
+            go("solution");
+          }}
           className="w-full px-5 py-4 text-lg font-bold shadow-lg"
           style={btn}
         >
           Ver a solução
         </button>
       </div>
-      <button onClick={() => { event("validou_nao"); go("fix"); }} className="mx-auto mt-5 block text-sm underline" style={{ color: muted }}>
+      <button
+        onClick={() => {
+          event("validou_nao");
+          go("fix");
+        }}
+        className="mx-auto mt-5 block text-sm underline"
+        style={{ color: muted }}
+      >
         Algum dado está errado? Corrigir
       </button>
 
       {page === "fix" && (
-        <Fix doc={doc} vars={vars} acc={acc} onDone={(v) => { setVars(v); event("corrigiu"); go("problem"); }} />
+        <Fix
+          doc={doc}
+          vars={vars}
+          acc={acc}
+          onDone={(v) => {
+            setVars(v);
+            event("corrigiu");
+            go("problem");
+          }}
+        />
       )}
     </div>
   );
 }
 
 /* A pessoa corrige renda, aumento e horas e o diagnóstico é recalculado */
-function Fix({ doc, vars, acc, onDone }: { doc: FormDoc; vars: Record<string, string>; acc: string; onDone: (v: Record<string, string>) => void }) {
+function Fix({
+  doc,
+  vars,
+  acc,
+  onDone,
+}: {
+  doc: FormDoc;
+  vars: Record<string, string>;
+  acc: string;
+  onDone: (v: Record<string, string>) => void;
+}) {
   const keys = [
     ["renda", "Quanto você fatura por mês hoje"],
     ["aumento", "Quanto a mais você quer faturar por mês"],
@@ -462,8 +713,16 @@ function Fix({ doc, vars, acc, onDone }: { doc: FormDoc; vars: Record<string, st
           return (
             <label key={k} className="mb-3 block text-sm opacity-80">
               {label}
-              <select value={v[k]} onChange={(e) => setV({ ...v, [k]: e.target.value })} className="mt-1.5 block w-full rounded-xl border border-white/20 bg-black/40 p-3.5 text-base">
-                {f.options.map((o) => <option key={o.id} value={o.value || o.label}>{o.label}</option>)}
+              <select
+                value={v[k]}
+                onChange={(e) => setV({ ...v, [k]: e.target.value })}
+                className="mt-1.5 block w-full rounded-xl border border-white/20 bg-black/40 p-3.5 text-base"
+              >
+                {f.options.map((o) => (
+                  <option key={o.id} value={o.value || o.label}>
+                    {o.label}
+                  </option>
+                ))}
               </select>
             </label>
           );
@@ -471,11 +730,24 @@ function Fix({ doc, vars, acc, onDone }: { doc: FormDoc; vars: Record<string, st
         return (
           <label key={k} className="mb-3 block text-sm opacity-80">
             {label}
-            <input type="text" inputMode="numeric" value={v[k] ?? ""} onChange={(e) => setV({ ...v, [k]: e.target.value })} placeholder={f.placeholder} className="mt-1.5 block w-full rounded-xl border border-white/20 bg-black/40 p-3.5 text-base" />
+            <input
+              type="text"
+              inputMode="numeric"
+              value={v[k] ?? ""}
+              onChange={(e) => setV({ ...v, [k]: e.target.value })}
+              placeholder={f.placeholder}
+              className="mt-1.5 block w-full rounded-xl border border-white/20 bg-black/40 p-3.5 text-base"
+            />
           </label>
         );
       })}
-      <button onClick={() => onDone(v)} className="mt-2 w-full rounded-2xl p-4 text-lg font-bold" style={{ background: acc, color: onColor(acc) }}>Refazer meu diagnóstico</button>
+      <button
+        onClick={() => onDone(v)}
+        className="mt-2 w-full rounded-2xl p-4 text-lg font-bold"
+        style={{ background: acc, color: onColor(acc) }}
+      >
+        Refazer meu diagnóstico
+      </button>
     </div>
   );
 }

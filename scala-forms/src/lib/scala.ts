@@ -74,31 +74,52 @@ export const TETO_HORAS = 60;
 export const brl = (n: number) => "R$ " + Math.round(n).toLocaleString("pt-BR");
 
 export type ScalaResult = {
-  renda: number; aumento: number; horas: number; meta: number; objetivo: string;
-  diagnosis: Diagnosis; rateHour: number; hoursNeeded: number; fits: boolean;
+  renda: number;
+  aumento: number;
+  horas: number;
+  meta: number;
+  objetivo: string;
+  diagnosis: Diagnosis;
+  rateHour: number;
+  hoursNeeded: number;
+  fits: boolean;
   /** "Especialista em Vendas" */
   label: string;
-  pct: number; pctMeta: number;
+  pct: number;
+  pctMeta: number;
   /** Score de carreira de 0 a 100 (baixo = situação ruim), calculado de 4 respostas */
   score: number;
 };
 
 export function computeScala(vars: Record<string, string>): ScalaResult | null {
-  const renda = Number(vars.renda), aumento = Number(vars.aumento), horas = Number(vars.horas);
-  if (!renda || !aumento || !horas) return null;
+  const renda = Number(vars.renda),
+    aumento = Number(vars.aumento),
+    horas = Number(vars.horas);
+  // só valores finitos e positivos: negativo ou infinito zera a meta e quebra os percentuais (NaN/Infinity)
+  if (![renda, aumento, horas].every((n) => Number.isFinite(n) && n > 0)) return null;
   const objetivo = vars.objetivo || "renda_online";
   const meta = renda + aumento;
   const agendaCheia = horas >= 35;
   // o objetivo decide a área; quem quer mais clientes com a agenda cheia precisa escalar, não de mais clientes
   const key: Diagnosis["key"] =
-    objetivo === "produto_digital" ? "produto"
-    : objetivo === "presenca_redes" ? "conteudo"
-    : objetivo === "dobrar_clientes" ? (agendaCheia ? "escalar" : "posicionamento")
-    : "vendas";
+    objetivo === "produto_digital"
+      ? "produto"
+      : objetivo === "presenca_redes"
+        ? "conteudo"
+        : objetivo === "dobrar_clientes"
+          ? agendaCheia
+            ? "escalar"
+            : "posicionamento"
+          : "vendas";
   const diagnosis = DIAGNOSES[key];
   const hoursNeeded = (horas * meta) / renda;
   return {
-    renda, aumento, horas, meta, objetivo, diagnosis,
+    renda,
+    aumento,
+    horas,
+    meta,
+    objetivo,
+    diagnosis,
     rateHour: renda / (horas * 4.3),
     hoursNeeded,
     fits: hoursNeeded <= TETO_HORAS,

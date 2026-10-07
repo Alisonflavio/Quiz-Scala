@@ -2,7 +2,15 @@
 import { useRef, useState } from "react";
 
 /* Envia uma imagem para o app e devolve a URL dela */
-export default function Upload({ value, onChange, accept = "image/*" }: { value: string; onChange: (url: string) => void; accept?: string }) {
+export default function Upload({
+  value,
+  onChange,
+  accept = "image/*",
+}: {
+  value: string;
+  onChange: (url: string) => void;
+  accept?: string;
+}) {
   const ref = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -28,9 +36,24 @@ export default function Upload({ value, onChange, accept = "image/*" }: { value:
         >
           {busy ? "Enviando..." : value ? `✓ ${name.length > 24 ? name.slice(0, 24) + "…" : name}` : "Enviar arquivo"}
         </button>
-        {value && <button type="button" title="Remover" onClick={() => onChange("")} className="text-xl text-gray-600 hover:text-rose-400">🗑</button>}
+        {value && (
+          <button
+            type="button"
+            title="Remover"
+            onClick={() => onChange("")}
+            className="text-xl text-gray-600 hover:text-rose-400"
+          >
+            🗑
+          </button>
+        )}
       </div>
-      <input ref={ref} type="file" accept={accept} hidden onChange={(e) => e.target.files?.[0] && send(e.target.files[0])} />
+      <input
+        ref={ref}
+        type="file"
+        accept={accept}
+        hidden
+        onChange={(e) => e.target.files?.[0] && send(e.target.files[0])}
+      />
       {err && <p className="mt-1 text-sm text-rose-400">{err}</p>}
     </div>
   );

@@ -12,7 +12,13 @@ export default async function OptionsPage(props: PageProps<"/dash/forms/[id]/opt
   const f = await getForm(id);
   if (!f) notFound();
   return (
-    <SettingsShell id={id} initialTitle={f.title} initialTheme={f.draft.theme} initialSettings={f.draft.settings} active="options">
+    <SettingsShell
+      id={id}
+      initialTitle={f.title}
+      initialTheme={f.draft.theme}
+      initialSettings={f.draft.settings}
+      active="options"
+    >
       <OptionsForm id={id} fields={f.draft.fields} />
     </SettingsShell>
   );

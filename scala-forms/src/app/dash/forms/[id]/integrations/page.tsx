@@ -12,7 +12,13 @@ export default async function IntegrationsPage(props: PageProps<"/dash/forms/[id
   const f = await getForm(id);
   if (!f) notFound();
   return (
-    <SettingsShell id={id} initialTitle={f.title} initialTheme={f.draft.theme} initialSettings={f.draft.settings} active="integrations">
+    <SettingsShell
+      id={id}
+      initialTitle={f.title}
+      initialTheme={f.draft.theme}
+      initialSettings={f.draft.settings}
+      active="integrations"
+    >
       <IntegrationsForm id={id} fields={f.draft.fields} />
     </SettingsShell>
   );

@@ -1,3 +1,4 @@
+/* Acesso ao banco para formulários: rascunho (`draft`) e versão publicada (`published`) ficam na mesma linha. */
 import "server-only";
 import { customAlphabet } from "nanoid";
 import { json, query, queryOne } from "./db";
@@ -62,6 +63,7 @@ export async function createForm(title: string, doc: FormDoc, userId: string) {
   return id;
 }
 
+/** Salva só o rascunho; o público continua vendo a versão publicada. */
 export async function saveDraft(id: string, title: string, doc: FormDoc) {
   await query("UPDATE forms SET title = $2, draft = $3::jsonb, updated_at = now() WHERE id = $1", [
     id,
@@ -70,10 +72,12 @@ export async function saveDraft(id: string, title: string, doc: FormDoc) {
   ]);
 }
 
+/** Publica: a versão pública passa a ser uma cópia do rascunho atual. */
 export async function publishForm(id: string) {
   await query("UPDATE forms SET published = draft, published_at = now(), updated_at = now() WHERE id = $1", [id]);
 }
 
+/** Copia o rascunho para um novo formulário "(cópia)". @returns id da cópia, ou `null` se o original não existe. */
 export async function duplicateForm(id: string, userId: string) {
   const f = await getForm(id);
   if (!f) return null;

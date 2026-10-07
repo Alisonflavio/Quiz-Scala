@@ -1,15 +1,7 @@
 /* Estrutura de um formulário. Tudo fica num único JSON (rascunho e versão publicada). */
 
 export type FieldType =
-  | "welcome"
-  | "name"
-  | "short_text"
-  | "long_text"
-  | "email"
-  | "phone"
-  | "number"
-  | "multiple_choice"
-  | "thankyou";
+  "welcome" | "name" | "short_text" | "long_text" | "email" | "phone" | "number" | "multiple_choice" | "thankyou";
 
 export const FIELD_TYPES: { type: FieldType; label: string; color: string }[] = [
   { type: "welcome", label: "Boas-vindas", color: "bg-emerald-50 text-emerald-300" },
@@ -54,7 +46,14 @@ export type EndingKind = "simple" | "scala_diagnosis";
 export type AfterSubmit = "message" | "redirect" | "button_link" | "button_whatsapp" | "button_file";
 
 /** Texto do botão da tela final: cada tipo guarda o seu (trocar de WhatsApp para link não leva o texto junto) */
-export function endButtonLabel(f: { after?: AfterSubmit; redirectUrl?: string; buttonUrl?: string; buttonLabel?: string; whatsappLabel?: string; fileLabel?: string }) {
+export function endButtonLabel(f: {
+  after?: AfterSubmit;
+  redirectUrl?: string;
+  buttonUrl?: string;
+  buttonLabel?: string;
+  whatsappLabel?: string;
+  fileLabel?: string;
+}) {
   const k = afterOf(f);
   if (k === "button_whatsapp") return f.whatsappLabel || "Falar no WhatsApp";
   if (k === "button_file") return f.fileLabel || "Baixar arquivo";
@@ -211,7 +210,24 @@ export const DEFAULT_SETTINGS: Settings = {
 };
 
 export const FONTS = [
-  "Montserrat", "Inter", "Poppins", "Roboto", "Open Sans", "Lato", "Raleway", "Nunito",
-  "Oswald", "Playfair Display", "Merriweather", "Work Sans", "DM Sans", "Manrope",
-  "Rubik", "Barlow", "Archivo", "Sora", "Outfit", "Space Grotesk",
+  "Montserrat",
+  "Inter",
+  "Poppins",
+  "Roboto",
+  "Open Sans",
+  "Lato",
+  "Raleway",
+  "Nunito",
+  "Oswald",
+  "Playfair Display",
+  "Merriweather",
+  "Work Sans",
+  "DM Sans",
+  "Manrope",
+  "Rubik",
+  "Barlow",
+  "Archivo",
+  "Sora",
+  "Outfit",
+  "Space Grotesk",
 ];

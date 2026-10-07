@@ -1,7 +1,8 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", var(--font-inter), system-ui, sans-serif;
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", var(--font-inter), system-ui, sans-serif;
   --color-brand: #2f6bff;
   --color-brand-dark: #2259e0;
 }
@@ -38,27 +39,71 @@
 }
 
 /* controles nativos escuros só nas telas da ferramenta (o formulário público não usa a classe) */
-html:has(.admin-root) { color-scheme: dark; }
-html, body { background: #14181e; color: #e3e8f0; }
+html:has(.admin-root) {
+  color-scheme: dark;
+}
+html,
+body {
+  background: #14181e;
+  color: #e3e8f0;
+}
 /* SF Pro em iPhone/Mac; o Inter (carregado no layout) cobre os outros aparelhos */
-body { font-family: var(--font-sans); }
+body {
+  font-family: var(--font-sans);
+}
 /* azul da marca em texto precisa ser mais claro pra ler sobre o fundo escuro */
-.text-brand, .hover\:text-brand:hover { color: #8db1ff; }
+.text-brand,
+.hover\:text-brand:hover {
+  color: #8db1ff;
+}
 
 /* controles do painel */
-@utility input { @apply w-full rounded-lg border border-gray-300 bg-white/[0.06] px-3 py-2 text-[15px] outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/30; }
-@utility btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-[15px] font-semibold transition disabled:opacity-50; }
-@utility btn-primary { @apply btn bg-brand text-white hover:bg-brand-dark; }
-@utility btn-outline { @apply btn border border-gray-300 bg-white/[0.04] text-gray-700 hover:border-gray-400 hover:bg-white/[0.08]; }
-@utility btn-outline-brand { @apply btn border border-brand bg-transparent text-[#8db1ff] hover:bg-brand/10; }
-@utility btn-danger { @apply btn border border-rose-500 bg-transparent text-rose-400 hover:bg-rose-500/10; }
-@utility label { @apply block text-[15px] font-medium text-gray-800; }
-@utility hint { @apply text-sm text-gray-500; }
+@utility input {
+  @apply w-full rounded-lg border border-gray-300 bg-white/[0.06] px-3 py-2 text-[15px] outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/30;
+}
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-[15px] font-semibold transition disabled:opacity-50;
+}
+@utility btn-primary {
+  @apply btn bg-brand text-white hover:bg-brand-dark;
+}
+@utility btn-outline {
+  @apply btn border border-gray-300 bg-white/[0.04] text-gray-700 hover:border-gray-400 hover:bg-white/[0.08];
+}
+@utility btn-outline-brand {
+  @apply btn border border-brand bg-transparent text-[#8db1ff] hover:bg-brand/10;
+}
+@utility btn-danger {
+  @apply btn border border-rose-500 bg-transparent text-rose-400 hover:bg-rose-500/10;
+}
+@utility label {
+  @apply block text-[15px] font-medium text-gray-800;
+}
+@utility hint {
+  @apply text-sm text-gray-500;
+}
 
 /* tela de entrada: campos sobre o cartão de vidro */
-@utility auth-input { @apply w-full rounded-xl border border-white/10 bg-white/[0.06] px-4 py-3 text-[15px] text-white outline-none transition placeholder:text-white/40 focus:border-brand focus:ring-2 focus:ring-brand/30; }
-.auth-input:-webkit-autofill { -webkit-text-fill-color: #fff; box-shadow: 0 0 0 1000px #1f2630 inset; caret-color: #fff; }
+@utility auth-input {
+  @apply w-full rounded-xl border border-white/10 bg-white/[0.06] px-4 py-3 text-[15px] text-white outline-none transition placeholder:text-white/40 focus:border-brand focus:ring-2 focus:ring-brand/30;
+}
+.auth-input:-webkit-autofill {
+  -webkit-text-fill-color: #fff;
+  box-shadow: 0 0 0 1000px #1f2630 inset;
+  caret-color: #fff;
+}
 
 /* fundo com brilho azul e pontinhos, se mexendo devagar (entrada e painel) */
-@keyframes auth-drift { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-4%, 2.5%); } }
-.auth-glow, .auth-dots { animation: auth-drift 11s ease-in-out infinite; }
+@keyframes auth-drift {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-4%, 2.5%);
+  }
+}
+.auth-glow,
+.auth-dots {
+  animation: auth-drift 11s ease-in-out infinite;
+}

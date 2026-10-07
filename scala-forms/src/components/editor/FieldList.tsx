@@ -11,8 +11,8 @@ type Props = {
 
 export default function FieldList({ fields, selId, onSelect, onDuplicate, onAdd }: Props) {
   return (
-    <aside className="flex w-[340px] shrink-0 flex-col border-r border-gray-200 xl:w-[420px]">
-      <div className="flex-1 overflow-y-auto">
+    <aside className="flex w-full shrink-0 flex-col border-b border-gray-200 lg:w-[340px] lg:border-b-0 lg:border-r xl:w-[420px]">
+      <div className="max-h-72 flex-1 overflow-y-auto lg:max-h-none">
         {fields.map((f, i) => {
           const t = FIELD_TYPES.find((x) => x.type === f.type);
           const on = f.id === selId;
@@ -30,7 +30,10 @@ export default function FieldList({ fields, selId, onSelect, onDuplicate, onAdd 
               </div>
               <button
                 title="Duplicar"
-                onClick={(e) => { e.stopPropagation(); onDuplicate(f.id); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDuplicate(f.id);
+                }}
                 className="text-gray-400 opacity-0 hover:text-brand group-hover:opacity-100"
               >
                 ⧉
@@ -40,7 +43,9 @@ export default function FieldList({ fields, selId, onSelect, onDuplicate, onAdd 
         })}
       </div>
       <div className="border-t border-gray-200 p-4">
-        <button onClick={onAdd} className="btn-outline-brand w-full">Adicionar campo</button>
+        <button onClick={onAdd} className="btn-outline-brand w-full">
+          Adicionar campo
+        </button>
       </div>
     </aside>
   );

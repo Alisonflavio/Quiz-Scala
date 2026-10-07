@@ -8,6 +8,7 @@ export async function GET(_: Request, ctx: RouteContext<"/a/[id]/[name]">) {
     headers: {
       "Content-Type": a.mime,
       "Cache-Control": "public, max-age=31536000, immutable",
+      "X-Content-Type-Options": "nosniff",
       // SVG enviado pelo usuário não pode rodar script
       "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
     },

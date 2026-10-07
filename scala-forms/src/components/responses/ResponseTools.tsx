@@ -16,7 +16,17 @@ export function TempBadge({ t }: { t: Temperature | null }) {
 }
 
 /* Temperatura automática (pela pontuação) com ajuste manual pelo time */
-export function TemperaturePicker({ formId, responseId, auto, manual }: { formId: string; responseId: string; auto: Temperature | null; manual: Temperature | null }) {
+export function TemperaturePicker({
+  formId,
+  responseId,
+  auto,
+  manual,
+}: {
+  formId: string;
+  responseId: string;
+  auto: Temperature | null;
+  manual: Temperature | null;
+}) {
   const [pending, start] = useTransition();
   const current = manual ?? auto;
   return (
@@ -42,7 +52,9 @@ export function DeleteResponse({ formId, responseId }: { formId: string; respons
   return (
     <button
       disabled={pending}
-      onClick={() => { if (confirm("Excluir esta resposta?")) start(() => deleteResponseAction(formId, responseId)); }}
+      onClick={() => {
+        if (confirm("Excluir esta resposta?")) start(() => deleteResponseAction(formId, responseId));
+      }}
       className="text-sm text-rose-400 hover:underline"
     >
       Excluir resposta
@@ -52,10 +64,20 @@ export function DeleteResponse({ formId, responseId }: { formId: string; respons
 
 export function CopyLink() {
   return (
-    <button title="Copiar link desta resposta" onClick={() => navigator.clipboard.writeText(location.href)} className="text-xl text-gray-600 hover:text-brand">🔗</button>
+    <button
+      title="Copiar link desta resposta"
+      onClick={() => navigator.clipboard.writeText(location.href)}
+      className="text-xl text-gray-600 hover:text-brand"
+    >
+      🔗
+    </button>
   );
 }
 
 export function PrintButton() {
-  return <button title="Imprimir" onClick={() => window.print()} className="text-xl text-gray-600 hover:text-brand">🖨</button>;
+  return (
+    <button title="Imprimir" onClick={() => window.print()} className="text-xl text-gray-600 hover:text-brand">
+      🖨
+    </button>
+  );
 }

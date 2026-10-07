@@ -14,6 +14,7 @@ export default async function SetupPage() {
       submit="Criar conta"
       action={setupAction}
       withName
+      newPassword
     />
   );
 }

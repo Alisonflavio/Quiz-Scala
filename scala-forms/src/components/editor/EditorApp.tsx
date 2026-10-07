@@ -30,10 +30,15 @@ export default function EditorApp({ id, initialTitle, initialDoc, publishedJson 
 
   /* salvamento automático do rascunho */
   useEffect(() => {
-    if (first.current) { first.current = false; return; }
+    if (first.current) {
+      first.current = false;
+      return;
+    }
     setSaveState("saving");
     const t = setTimeout(() => {
-      saveDraftAction(id, title, doc).then(() => setSaveState("saved")).catch(() => setSaveState("error"));
+      saveDraftAction(id, title, doc)
+        .then(() => setSaveState("saved"))
+        .catch(() => setSaveState("error"));
     }, 700);
     return () => clearTimeout(t);
   }, [doc, id, title]);
@@ -110,11 +115,11 @@ export default function EditorApp({ id, initialTitle, initialDoc, publishedJson 
     const base = newField(type, doc.fields.indexOf(f));
     updateField(fid, {
       type,
-      options: type === "multiple_choice" ? f.options ?? base.options : f.options,
+      options: type === "multiple_choice" ? (f.options ?? base.options) : f.options,
       key: f.key || base.key,
       required: type === "welcome" || type === "thankyou" ? false : f.required,
       buttonLabel: f.buttonLabel ?? base.buttonLabel,
-      ending: type === "thankyou" ? f.ending ?? "simple" : f.ending,
+      ending: type === "thankyou" ? (f.ending ?? "simple") : f.ending,
       logic: type === "multiple_choice" ? f.logic : f.logic?.filter((r) => r.kind === "points"),
     });
   };
@@ -129,7 +134,7 @@ export default function EditorApp({ id, initialTitle, initialDoc, publishedJson 
   const scoredCount = useMemo(() => doc.fields.filter((f) => f.type === "multiple_choice").length, [doc.fields]);
 
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex min-h-screen flex-col lg:h-screen">
       <FormHeader
         id={id}
         title={title}
@@ -139,7 +144,9 @@ export default function EditorApp({ id, initialTitle, initialDoc, publishedJson 
             <span className="mr-1 hidden text-sm text-gray-400 2xl:inline">
               {saveState === "saving" ? "Salvando..." : saveState === "error" ? "Erro ao salvar" : "Rascunho salvo"}
             </span>
-            <a href={`/f/${id}?preview=1`} target="_blank" className="btn-outline">👁 Ver</a>
+            <a href={`/f/${id}?preview=1`} target="_blank" className="btn-outline">
+              👁 Ver
+            </a>
             <button
               className="btn-outline"
               title="Copiar link"
@@ -148,7 +155,9 @@ export default function EditorApp({ id, initialTitle, initialDoc, publishedJson 
               ⤴
             </button>
             {isPublished ? (
-              <button className="btn bg-gray-400 text-white" disabled>✓ Publicado</button>
+              <button className="btn bg-gray-400 text-white" disabled>
+                ✓ Publicado
+              </button>
             ) : (
               <button className="btn-primary" onClick={publish} disabled={pending || saveState === "saving"}>
                 {pending ? "Publicando..." : "Publicar"}
@@ -158,11 +167,14 @@ export default function EditorApp({ id, initialTitle, initialDoc, publishedJson 
         }
       />
 
-      <div className="flex min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
         <FieldList
           fields={doc.fields}
           selId={sel?.id}
-          onSelect={(fid) => { setSelId(fid); setPanel("none"); }}
+          onSelect={(fid) => {
+            setSelId(fid);
+            setPanel("none");
+          }}
           onDuplicate={duplicateField}
           onAdd={() => setModal("add")}
         />
@@ -183,7 +195,7 @@ export default function EditorApp({ id, initialTitle, initialDoc, publishedJson 
           )
         )}
 
-        <div className="flex min-w-0 flex-1 items-stretch gap-4 overflow-y-auto bg-gray-100 p-6">
+        <div className="flex min-w-0 flex-1 items-stretch gap-4 bg-gray-100 p-4 sm:p-6 lg:overflow-y-auto">
           {sel ? (
             <FieldPreview
               doc={doc}
@@ -198,21 +210,42 @@ export default function EditorApp({ id, initialTitle, initialDoc, publishedJson 
           )}
           {sel && (
             <div className="flex flex-col justify-center gap-10 text-3xl">
-              <button title="Mover para cima" onClick={() => moveField(sel.id, -1)} className="text-gray-800 hover:text-brand">↑</button>
-              <button title="Adicionar campo" onClick={() => setModal("add")} className="text-brand">＋</button>
-              <button title="Mover para baixo" onClick={() => moveField(sel.id, 1)} className="text-gray-800 hover:text-brand">↓</button>
+              <button
+                title="Mover para cima"
+                onClick={() => moveField(sel.id, -1)}
+                className="text-gray-800 hover:text-brand"
+              >
+                ↑
+              </button>
+              <button title="Adicionar campo" onClick={() => setModal("add")} className="text-brand">
+                ＋
+              </button>
+              <button
+                title="Mover para baixo"
+                onClick={() => moveField(sel.id, 1)}
+                className="text-gray-800 hover:text-brand"
+              >
+                ↓
+              </button>
             </div>
           )}
         </div>
       </div>
 
       {modal === "add" && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={() => setModal("none")}>
+        <div
+          className="fixed inset-0 z-50 grid grid-cols-[minmax(0,1fr)] place-items-center bg-black/40 p-4"
+          onClick={() => setModal("none")}
+        >
           <div className="w-full max-w-lg rounded-lg bg-surface p-6" onClick={(e) => e.stopPropagation()}>
             <h2 className="mb-4 text-lg font-semibold text-gray-800">Adicionar campo</h2>
             <div className="grid grid-cols-2 gap-2">
               {FIELD_TYPES.map((t) => (
-                <button key={t.type} onClick={() => addField(t.type)} className={`rounded-md px-4 py-3 text-left font-medium ${t.color} hover:ring-2 hover:ring-brand/30`}>
+                <button
+                  key={t.type}
+                  onClick={() => addField(t.type)}
+                  className={`rounded-md px-4 py-3 text-left font-medium ${t.color} hover:ring-2 hover:ring-brand/30`}
+                >
                   {typeLabel(t.type)}
                 </button>
               ))}
@@ -224,7 +257,11 @@ export default function EditorApp({ id, initialTitle, initialDoc, publishedJson 
         <ScoringModal doc={doc} count={scoredCount} onChange={setDoc} onClose={() => setModal("none")} />
       )}
       {modal === "media" && sel && (
-        <MediaModal media={sel.media ?? null} onChange={(m) => updateField(sel.id, { media: m })} onClose={() => setModal("none")} />
+        <MediaModal
+          media={sel.media ?? null}
+          onChange={(m) => updateField(sel.id, { media: m })}
+          onClose={() => setModal("none")}
+        />
       )}
     </div>
   );

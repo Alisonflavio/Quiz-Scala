@@ -11,7 +11,8 @@ const PERGUNTAS = {
   meta: "Quanto você gostaria de faturar mensalmente nos próximos 12 meses?",
   arroba: "Qual seu endereço @ na plataforma que mais usa?",
   objetivo: "Qual é o maior objetivo que você deseja alcançar nos próximos 12 meses?",
-  vinteMin: "Você teria 20 minutos pra conversar com um dos nossos especialistas e entender qual o melhor caminho pra alcançá seu objetivo?",
+  vinteMin:
+    "Você teria 20 minutos pra conversar com um dos nossos especialistas e entender qual o melhor caminho pra alcançá seu objetivo?",
 };
 
 const OBJETIVOS: Record<string, string> = {

@@ -1,5 +1,7 @@
+/* Helpers de aparência do formulário público (fonte, fundo, cores) e de embed de vídeo. */
 import type { Theme } from "./types";
 
+/** URL do Google Fonts para a fonte escolhida. */
 export const fontHref = (font: string) =>
   `https://fonts.googleapis.com/css2?family=${encodeURIComponent(font)}:wght@400;500;600;700;800&display=swap`;
 
@@ -10,7 +12,13 @@ export const background = (t: Theme) =>
 /** Cor com transparência a partir de #RRGGBB */
 export function alpha(hex: string, a: number) {
   const h = hex.replace("#", "");
-  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h.padEnd(6, "0");
+  const full =
+    h.length === 3
+      ? h
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : h.padEnd(6, "0");
   const n = parseInt(full.slice(0, 6), 16);
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
 }
@@ -25,6 +33,7 @@ export function onColor(hex: string) {
 
 export const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
+/** URL de embed a partir de um link do YouTube (watch, youtu.be, shorts); `null` se não for reconhecido. */
 export function youtubeEmbed(url: string) {
   const m = url.match(/(?:youtu\.be\/|v=|shorts\/|embed\/)([\w-]{11})/);
   return m ? `https://www.youtube.com/embed/${m[1]}` : null;
