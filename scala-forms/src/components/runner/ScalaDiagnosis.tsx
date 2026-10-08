@@ -606,9 +606,14 @@ export default function ScalaDiagnosis({ doc, field, vars: initialVars, utm, res
       <ScoreMeter score={r.score} muted={muted} track={alpha(t.answerColor, 0.12)} text={text} />
 
       <div className="mb-7 p-5" style={card}>
-        <h2 className="mb-1 text-sm font-bold uppercase tracking-wider" style={{ color: muted }}>
-          Seus números
-        </h2>
+        <div className="mb-1 flex items-baseline justify-between gap-3">
+          <h2 className="text-sm font-bold uppercase tracking-wider" style={{ color: muted }}>
+            Seus números
+          </h2>
+          <span className="text-right text-[13px] font-semibold" style={{ color: GOAL_GREEN }}>
+            Aonde você quer chegar
+          </span>
+        </div>
         <ClimbChart current={r.renda} goal={r.meta} acc={acc} />
         <div className="mt-2 grid grid-cols-1 gap-2.5">
           <Num label="Hoje você fatura" value={rendaLabel ?? `${brl(r.renda)}/mês`} muted={t.answerColor} />
