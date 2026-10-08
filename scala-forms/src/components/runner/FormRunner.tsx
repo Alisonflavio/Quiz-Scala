@@ -581,7 +581,6 @@ function FieldView({
         style={{ color: t.questionColor, whiteSpace: "pre-line" }}
       >
         {title}
-        {f.required && !centered && <span className="opacity-60"> *</span>}
       </h1>
       {desc && (
         <p
@@ -755,9 +754,9 @@ function FieldView({
       {f.type === "thankyou" && afterOf(f) === "redirect" && f.redirectUrl && (
         <p className="mt-8 text-sm opacity-60">Redirecionando...</p>
       )}
-      {/* hover só faz sentido pra quem usa mouse — em telas de toque não existe ":hover" parado,
-       * então isso não atrapalha o celular, só melhora a experiência no computador */}
-      <style>{`.sf-opt:hover{border-color:${alpha(t.buttonColor, 0.55)} !important;background:${alpha(t.buttonColor, 0.09)} !important;}`}</style>
+      {/* hover só pra quem tem mouse: no celular (iPhone/Android) o ":hover" fica "preso" onde o dedo
+       * tocou antes, e a opção da pergunta seguinte parecia já marcada */}
+      <style>{`@media (hover: hover) and (pointer: fine){.sf-opt:hover{border-color:${alpha(t.buttonColor, 0.55)} !important;background:${alpha(t.buttonColor, 0.09)} !important;}}`}</style>
     </div>
   );
 }
