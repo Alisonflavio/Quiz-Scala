@@ -158,7 +158,17 @@
   else if (q.get('tela') === 'aula' || q.get('tela') === 'fim') mostrar(q.get('tela'));
 
   var btnAula = document.getElementById('btn-ir-aula');
-  if (btnAula) {
+  if (btnAula && btnAula.tagName === 'A') {
+    // Leva para a VSL levando junto as UTMs da URL atual
+    try {
+      var dest = new URL(btnAula.getAttribute('href'), window.location.origin);
+      ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].forEach(function (k) {
+        var v = q.get(k);
+        if (v && !dest.searchParams.has(k)) dest.searchParams.set(k, v);
+      });
+      btnAula.href = dest.toString();
+    } catch (e) {}
+  } else if (btnAula) {
     btnAula.addEventListener('click', function () {
       mostrar('aula');
     });
