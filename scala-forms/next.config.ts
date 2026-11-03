@@ -39,6 +39,8 @@ const nextConfig: NextConfig = {
         { source: "/", has: [{ type: "host", value: "diagnostico-scala.vercel.app" }], destination: "/f/A6BNBSMsX6" },
         // o formulário salvo ainda aponta para a foto antiga em PNG; ela agora é a WebP leve, sem mexer no formulário
         { source: "/quiz/falta.png", destination: "/quiz/falta.webp" },
+        // aliases da página de obrigado
+        { source: "/obrigado.html", destination: "/obrigado" },
       ],
       afterFiles: [],
       fallback: [],

@@ -243,7 +243,7 @@ export function scalaTemplate(): FormDoc {
         whatsappMessage: SCALA_WA_MESSAGE,
         videoUrl: "/scala/depoimento-reinaldo.mp4",
         videoPoster: "/scala/depoimento-reinaldo-poster.jpg",
-        thankYouUrl: "/obrigado.html",
+        thankYouUrl: "/obrigado",
       },
     },
   ];

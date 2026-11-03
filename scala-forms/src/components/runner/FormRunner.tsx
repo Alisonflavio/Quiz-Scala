@@ -388,7 +388,7 @@ export default function FormRunner({ formId, doc, preview }: Props) {
   }
 
   if (field?.type === "thankyou" && field.ending === "scala_diagnosis") {
-    const thankYou = (field.scala?.thankYouUrl || "/obrigado.html").trim();
+    const thankYou = (field.scala?.thankYouUrl || "/obrigado").trim();
     const keepInline = preview || thankYou === "inline";
     if (!keepInline) {
       return (

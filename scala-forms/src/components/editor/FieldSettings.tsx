@@ -193,11 +193,11 @@ export default function FieldSettings({
                   className="input mt-2"
                   value={scala.thankYouUrl ?? ""}
                   onChange={(e) => setScala({ thankYouUrl: e.target.value })}
-                  placeholder="/obrigado.html"
+                  placeholder="/obrigado"
                 />
                 <p className="mt-1 text-xs text-gray-400">
                   Depois do diagnóstico, redireciona para esta página com nome, WhatsApp, renda, meta etc. na URL.
-                  Vazio = <code>/obrigado.html</code>. Use <code>inline</code> para o resultado antigo dentro do form.
+                  Vazio = <code>/obrigado</code>. Use <code>inline</code> para o resultado antigo dentro do form.
                 </p>
               </div>
             </div>

@@ -108,12 +108,12 @@ describe("buildObrigadoUrl", () => {
   it("deve_montar_query_com_nome_whatsapp_renda_e_meta", () => {
     const r = computeScala(base)!;
     const url = buildObrigadoUrl(
-      "/obrigado.html",
+      "/obrigado",
       { ...base, nome: "Lucas", whatsapp: "41999990000", email: "a@b.com", insta: "@lucas" },
       { utm_source: "ig" },
       r,
     );
-    expect(url.startsWith("/obrigado.html?")).toBe(true);
+    expect(url.startsWith("/obrigado?")).toBe(true);
     const q = new URL(url, "https://example.com").searchParams;
     expect(q.get("nome")).toBe("Lucas");
     expect(q.get("whatsapp")).toBe("41999990000");
