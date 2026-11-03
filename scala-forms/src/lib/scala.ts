@@ -197,3 +197,39 @@ export function scoreLevel(score: number): { label: string; color: string } {
   if (score < 80) return { label: "Médio", color: "#FFC247" };
   return { label: "Bom", color: "#2FBF71" };
 }
+
+/** Monta a URL da página de obrigado com os dados do diagnóstico na query. */
+export function buildObrigadoUrl(
+  base: string,
+  vars: Record<string, string>,
+  utm: Record<string, string> = {},
+  result: ScalaResult | null = null,
+): string {
+  const url = new URL(base, typeof window !== "undefined" ? window.location.origin : "https://localhost");
+  const renda = result?.renda ?? (Number(vars.renda) || 0);
+  const aumento = result?.aumento ?? (Number(vars.aumento) || 0);
+  const meta = result?.meta ?? (renda && aumento ? renda + aumento : 0);
+  const set = (k: string, v: string | number | undefined | null) => {
+    if (v == null || String(v).trim() === "") return;
+    url.searchParams.set(k, String(v).trim());
+  };
+  set("nome", vars.nome);
+  set("whatsapp", vars.whatsapp || vars.telefone);
+  set("telefone", vars.whatsapp || vars.telefone);
+  set("email", vars.email);
+  set("insta", vars.insta);
+  if (renda) set("renda", String(renda));
+  if (renda) set("fatura", String(renda));
+  if (aumento) set("aumento", String(aumento));
+  if (meta) set("meta", String(meta));
+  if (vars.horas) set("horas", vars.horas);
+  if (result?.label) set("diagnostico", result.label);
+  if (result?.diagnosis?.area) set("area", result.diagnosis.area);
+  if (result?.diagnosis?.gargalo) set("gargalo", result.diagnosis.gargalo);
+  for (const [k, v] of Object.entries(utm)) set(k, v);
+  // devolve path+query+hash relativo se a base for relativa
+  if (base.startsWith("/") || base.startsWith("./") || !/^https?:/i.test(base)) {
+    return url.pathname + url.search + url.hash;
+  }
+  return url.toString();
+}

@@ -6,6 +6,7 @@ import { UTM_KEYS, computeScore, interpolate, nextFieldId, validateAnswer, varia
 import { LETTERS, alpha, background, fontHref, onColor } from "@/lib/theme";
 import { DEFAULT_WA_MESSAGE, afterOf, endButtonLabel, type AnswerValue, type Field, type FormDoc } from "@/lib/types";
 import { comImagemPadrao } from "@/lib/quiz-images";
+import { buildObrigadoUrl, computeScala } from "@/lib/scala";
 import PhoneInput from "./PhoneInput";
 import ScalaDiagnosis from "./ScalaDiagnosis";
 import { loadTrackers, trackConversion, trackEvent } from "./trackers";
@@ -108,6 +109,63 @@ function LoadingReveal({ acc, color }: { acc: string; color: string }) {
         {LOADING_MESSAGES[i]}
       </p>
       <style>{`.sf-in{animation:sfin .35s ease}@keyframes sfin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}`}</style>
+    </div>
+  );
+}
+
+
+function ScalaObrigadoGate({
+  style,
+  font,
+  acc,
+  color,
+  thankYou,
+  vars,
+  utm,
+}: {
+  style: React.CSSProperties;
+  font: string;
+  acc: string;
+  color: string;
+  thankYou: string;
+  vars: Record<string, string>;
+  utm: Record<string, string>;
+}) {
+  const sent = useRef(false);
+  useEffect(() => {
+    if (sent.current) return;
+    sent.current = true;
+    const result = computeScala(vars);
+    const dest = buildObrigadoUrl(thankYou, vars, utm, result);
+    // backup na sessão: a página de obrigado também lê sessionStorage
+    try {
+      const renda = result?.renda ?? (Number(vars.renda) || 0);
+      const aumento = result?.aumento ?? (Number(vars.aumento) || 0);
+      sessionStorage.setItem(
+        "scala_obrigado",
+        JSON.stringify({
+          nome: vars.nome || "",
+          telefone: vars.whatsapp || vars.telefone || "",
+          whatsapp: vars.whatsapp || vars.telefone || "",
+          email: vars.email || "",
+          insta: vars.insta || "",
+          renda,
+          fatura: renda,
+          aumento,
+          meta: result?.meta ?? (renda && aumento ? renda + aumento : 0),
+          diagnostico: result?.label || "",
+          area: result?.diagnosis.area || "",
+          gargalo: result?.diagnosis.gargalo || "",
+        }),
+      );
+    } catch {}
+    window.location.replace(dest);
+  }, [thankYou, vars, utm]);
+  return (
+    <div style={style} className="min-h-dvh isolate">
+      <link rel="stylesheet" href={fontHref(font)} />
+      <AnimatedBackdrop acc={acc} />
+      <LoadingReveal acc={acc} color={color} />
     </div>
   );
 }
@@ -330,6 +388,21 @@ export default function FormRunner({ formId, doc, preview }: Props) {
   }
 
   if (field?.type === "thankyou" && field.ending === "scala_diagnosis") {
+    const thankYou = (field.scala?.thankYouUrl || "/obrigado.html").trim();
+    const keepInline = preview || thankYou === "inline";
+    if (!keepInline) {
+      return (
+        <ScalaObrigadoGate
+          style={style}
+          font={t.font}
+          acc={t.buttonColor}
+          color={t.answerColor}
+          thankYou={thankYou}
+          vars={vars}
+          utm={utm}
+        />
+      );
+    }
     return (
       <div style={style} className="min-h-dvh isolate">
         <link rel="stylesheet" href={fontHref(t.font)} />

@@ -187,6 +187,19 @@ export default function FieldSettings({
                 <label className="mb-2 block text-gray-500">Capa do vídeo</label>
                 <Upload value={scala.videoPoster} onChange={(u) => setScala({ videoPoster: u })} />
               </div>
+              <div>
+                <label className="text-gray-500">URL da página de obrigado</label>
+                <input
+                  className="input mt-2"
+                  value={scala.thankYouUrl ?? ""}
+                  onChange={(e) => setScala({ thankYouUrl: e.target.value })}
+                  placeholder="/obrigado.html"
+                />
+                <p className="mt-1 text-xs text-gray-400">
+                  Depois do diagnóstico, redireciona para esta página com nome, WhatsApp, renda, meta etc. na URL.
+                  Vazio = <code>/obrigado.html</code>. Use <code>inline</code> para o resultado antigo dentro do form.
+                </p>
+              </div>
             </div>
           )}
         </>

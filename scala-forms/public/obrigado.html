@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Diagnóstico recebido | Mentoria Scala Fitness</title>
+  <meta name="description" content="Seu diagnóstico foi enviado. Assista à aula do Rafael enquanto o gestor de carreira te chama no WhatsApp." />
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="theme-color" content="#000000" />
+  <link rel="icon" href="/obrigado/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/obrigado/style.css" />
+  <style>
+    :root {
+      --scala-laranja: #e84f1c;
+      --scala-verde: #22c55e;
+      --scala-card: #141414;
+      --scala-borda: #2a2a2a;
+    }
+    body.obrigado {
+      font-family: Inter, system-ui, sans-serif;
+      background: #000;
+      color: #fff;
+      margin: 0;
+      min-height: 100dvh;
+      -webkit-font-smoothing: antialiased;
+    }
+    .obg-shell {
+      width: 100%;
+      max-width: 430px;
+      margin: 0 auto;
+      min-height: 100dvh;
+      padding: 28px 20px 40px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+    }
+    .obg-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--scala-laranja);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: 28px;
+    }
+    .obg-logo img { width: 22px; height: 22px; }
+    .obg-tela { display: none; flex-direction: column; flex: 1; }
+    .obg-tela.ativa { display: flex; }
+    .obg-rodape {
+      margin-top: auto;
+      padding-top: 32px;
+      text-align: center;
+      color: #6b6b6b;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .obg-badge-verde {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(34, 197, 94, 0.45);
+      background: rgba(34, 197, 94, 0.12);
+      color: #4ade80;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 6px 12px;
+    }
+    .obg-badge-laranja {
+      display: inline-flex;
+      border-radius: 999px;
+      border: 1px solid rgba(232, 79, 28, 0.55);
+      background: rgba(232, 79, 28, 0.12);
+      color: var(--scala-laranja);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 6px 12px;
+    }
+    .obg-card {
+      background: var(--scala-card);
+      border: 1px solid var(--scala-borda);
+      border-radius: 18px;
+      padding: 18px 16px;
+    }
+    .obg-card-laranja {
+      border-color: rgba(232, 79, 28, 0.55);
+    }
+    .obg-label {
+      color: #8a8a8a;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .obg-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      border: 0;
+      border-radius: 14px;
+      background: var(--scala-laranja);
+      color: #fff;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 16px;
+      line-height: 1.2;
+      padding: 16px 18px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .obg-btn span {
+      display: block;
+      margin-top: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      opacity: 0.9;
+    }
+    .obg-check {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      background: var(--scala-verde);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .obg-step {
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .obg-step.ativo {
+      background: var(--scala-laranja);
+      color: #fff;
+    }
+    .obg-step.pendente {
+      border: 1px solid #3a3a3a;
+      color: #8a8a8a;
+      background: transparent;
+    }
+    #aula-player {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    #aula-player iframe {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body class="obrigado">
+  <div class="obg-shell">
+    <div class="obg-logo">
+      <img src="/obrigado/logo-scala.svg" alt="" width="22" height="22" />
+      <span>Mentoria Scala Fitness</span>
+    </div>
+
+    <!-- 1. PÁGINA DE OBRIGADO -->
+    <section id="tela-obrigado" class="obg-tela ativa" aria-label="Diagnóstico recebido">
+      <div class="mb-5 flex justify-center">
+        <div class="flex h-14 w-14 items-center justify-center rounded-full bg-[rgba(34,197,94,0.15)] ring-1 ring-[rgba(34,197,94,0.45)]">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" fill="#22c55e"/>
+            <path d="M7.5 12.5l3 3 6-6" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="mb-4 flex justify-center">
+        <span class="obg-badge-verde">Diagnóstico recebido</span>
+      </div>
+
+      <h1 class="m-0 mb-3 text-center text-[28px] font-extrabold leading-[1.2] tracking-[-0.02em]">
+        Tudo certo, <span data-nome>Lucas</span>! Seu diagnóstico já está com&nbsp;<span class="text-[#e84f1c]">o nosso time.</span>
+      </h1>
+      <p class="m-0 mb-6 text-center text-[15px] leading-[1.55] text-[#a3a3a3]">
+        Um gestor de carreira vai te chamar no WhatsApp para montar o seu plano.
+      </p>
+
+      <div class="obg-card mb-4">
+        <div class="obg-label mb-2">Vamos te chamar neste número</div>
+        <div class="flex items-center justify-between gap-3">
+          <div id="tel-exibido" class="text-[20px] font-bold tracking-[-0.01em]" data-telefone>(41) 99999-0000</div>
+          <button type="button" id="btn-corrigir-tel" class="shrink-0 border-0 bg-transparent p-0 text-[14px] font-semibold text-[#e84f1c] cursor-pointer">Corrigir</button>
+        </div>
+        <div id="tel-editar" class="mt-3 hidden gap-2">
+          <input id="tel-input" type="tel" inputmode="numeric" maxlength="15" class="min-w-0 flex-1 rounded-lg border border-[#2a2a2a] bg-black px-3 py-2 text-white outline-none focus:border-[#e84f1c]" placeholder="41999990000" />
+          <button type="button" id="btn-salvar-tel" class="rounded-lg bg-[#e84f1c] px-3 py-2 text-sm font-semibold text-white border-0 cursor-pointer">Salvar</button>
+        </div>
+      </div>
+
+      <div class="obg-card mb-4">
+        <div class="obg-label mb-4">O que acontece agora</div>
+        <div class="flex flex-col gap-4">
+          <div class="flex items-start gap-3">
+            <span class="obg-check" aria-hidden="true">✓</span>
+            <span class="text-[15px] font-medium leading-[1.35]">Você concluiu o diagnóstico.</span>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="obg-step ativo" aria-hidden="true">2</span>
+            <span class="text-[15px] font-medium leading-[1.35]">Um gestor de carreira te chama.</span>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="obg-step pendente" aria-hidden="true">3</span>
+            <span class="text-[15px] font-medium leading-[1.35] text-[#a3a3a3]">Vocês montam o seu plano.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-6 flex items-start gap-3 rounded-[14px] border border-[rgba(34,197,94,0.35)] bg-[rgba(34,197,94,0.08)] px-4 py-3">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="mt-0.5 shrink-0" aria-hidden="true">
+          <path d="M4 6.5C4 5.12 5.12 4 6.5 4h11C18.88 4 20 5.12 20 6.5v7c0 1.38-1.12 2.5-2.5 2.5H11l-4.2 3.15c-.55.41-1.3.02-1.3-.66V16H6.5C5.12 16 4 14.88 4 13.5v-7z" fill="#22c55e"/>
+        </svg>
+        <p class="m-0 text-[13px] leading-[1.45] text-[#d4d4d4]">
+          Fique de olho no WhatsApp: a mensagem vai chegar do <strong class="text-white">time da Scala Fitness.</strong>
+        </p>
+      </div>
+
+      <button type="button" id="btn-ir-aula" class="obg-btn">
+        Assistir à aula do Rafael
+        <span>Enquanto isso · 20 minutos</span>
+      </button>
+
+      <p class="obg-rodape">Treino muda o corpo. Método muda a carreira.</p>
+    </section>
+
+    <!-- 2. AULA DO RAFAEL -->
+    <section id="tela-aula" class="obg-tela" aria-label="Aula do Rafael">
+      <div class="mb-5 flex items-start gap-3 rounded-[14px] border border-[rgba(34,197,94,0.35)] bg-[rgba(34,197,94,0.08)] px-4 py-3">
+        <span class="obg-check mt-0.5" aria-hidden="true">✓</span>
+        <p class="m-0 text-[13px] leading-[1.45] text-[#e5e5e5]">
+          Diagnóstico enviado. Seu gestor de carreira vai te chamar em breve.
+        </p>
+      </div>
+
+      <div class="mb-4">
+        <span class="obg-badge-laranja">Enquanto isso</span>
+      </div>
+
+      <h1 class="m-0 mb-3 text-[28px] font-extrabold leading-[1.2] tracking-[-0.02em]">
+        Antes da conversa, assista à <span class="text-[#e84f1c]">aula do Rafael.</span>
+      </h1>
+      <p class="m-0 mb-6 text-[15px] leading-[1.55] text-[#d4d4d4]">
+        <strong class="text-white">5 passos para dobrar o seu faturamento</strong> nos próximos 6 meses. Você chega na conversa já com a cabeça no plano.
+      </p>
+
+      <div id="aula-vsl" data-video="7KFNhE8j9AQ" class="relative mb-3 aspect-[9/16] w-full cursor-pointer overflow-hidden rounded-[18px] bg-[#111]">
+        <div id="aula-player"></div>
+        <div id="aula-capa" class="absolute inset-0 z-[2]">
+          <img src="/obrigado/rafael.webp" alt="5 passos para dobrar o seu faturamento" class="h-full w-full object-cover object-[50%_18%]" />
+          <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/25"></div>
+          <div class="absolute left-3 top-3 rounded-md bg-black/70 px-2 py-1 text-[11px] font-semibold text-white">Aula · 20 min</div>
+          <div class="absolute inset-x-4 top-[28%] text-center">
+            <div class="text-[28px] font-extrabold leading-[1.05] tracking-[-0.02em] text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.65)]">
+              5 PASSOS PARA<br /><span class="text-[#4da3ff]">DOBRAR</span><br />O SEU<br />FATURAMENTO
+            </div>
+          </div>
+          <div class="absolute inset-0 flex items-center justify-center pt-[42%]">
+            <div class="flex h-16 w-16 items-center justify-center rounded-full bg-[#e84f1c] shadow-[0_8px_30px_rgba(232,79,28,0.45)]">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" class="ml-0.5">
+                <path d="M8 5.5v13l11-6.5L8 5.5z" fill="#fff"/>
+              </svg>
+            </div>
+          </div>
+          <div class="absolute bottom-3 left-3 right-3">
+            <div class="mb-1 flex justify-between text-[11px] text-white/80">
+              <span id="aula-tempo-atual">0:00</span><span>20:45</span>
+            </div>
+            <div class="h-[3px] w-full overflow-hidden rounded-full bg-white/25">
+              <div id="aula-progresso" class="h-full w-0 bg-white"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="mb-6 flex items-center gap-2 text-[13px] text-[#d4d4d4]">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 3.5h9.5L18.5 7v13.5H6V3.5z" stroke="#a3a3a3" stroke-width="1.6"/>
+          <path d="M8.5 10h7M8.5 13.5h7M8.5 17h4.5" stroke="#a3a3a3" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        Pega papel e caneta: tem uma conta pra fazer no meio da aula.
+      </p>
+
+      <div class="obg-card mb-2">
+        <div class="obg-label mb-4">O que você vai ver</div>
+        <ol class="m-0 flex list-none flex-col gap-0 p-0">
+          <li class="flex items-center gap-3 border-b border-[#242424] py-3">
+            <span class="obg-step ativo">1</span>
+            <span class="text-[14px] leading-[1.35]">Posicionamento: como arrumar o seu Instagram</span>
+          </li>
+          <li class="flex items-center gap-3 border-b border-[#242424] py-3">
+            <span class="obg-step ativo">2</span>
+            <span class="text-[14px] leading-[1.35]">Stories que puxam conversa</span>
+          </li>
+          <li class="flex items-center gap-3 border-b border-[#242424] py-3">
+            <span class="obg-step ativo">3</span>
+            <span class="text-[14px] leading-[1.35]">Reels que transformam seguidor em cliente</span>
+          </li>
+          <li class="flex items-center gap-3 border-b border-[#242424] py-3">
+            <span class="obg-step ativo">4</span>
+            <span class="text-[14px] leading-[1.35]">Roteiro de abordagem no direct e no WhatsApp</span>
+          </li>
+          <li class="flex items-center gap-3 py-3">
+            <span class="obg-step ativo">5</span>
+            <span class="text-[14px] leading-[1.35]">Produto, preço e recorrência</span>
+          </li>
+        </ol>
+
+        <div class="mt-2 flex items-center gap-3 border-t border-[#242424] pt-4">
+          <img src="/obrigado/rafael.webp" alt="Rafael Tonietto" class="h-12 w-12 rounded-full object-cover object-top" width="48" height="48" />
+          <div>
+            <div class="text-[14px] font-bold">Rafael Tonietto</div>
+            <div class="text-[12px] leading-[1.35] text-[#8a8a8a]">+20 anos de mercado · método aplicado com +500 personal trainers</div>
+          </div>
+        </div>
+      </div>
+
+      <p class="obg-rodape">Treino muda o corpo. Método muda a carreira.</p>
+    </section>
+
+    <!-- 3. FECHAMENTO -->
+    <section id="tela-fim" class="obg-tela" aria-label="Você chegou ao fim">
+      <div class="relative mb-5 overflow-hidden rounded-[22px]">
+        <img src="/obrigado/rafael.webp" alt="Rafael Tonietto" class="block h-[340px] w-full object-cover object-[50%_18%]" width="900" height="1125" />
+        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/70 to-transparent px-4 pb-4 pt-16">
+          <div class="text-[18px] font-bold">Rafael Tonietto</div>
+          <div class="text-[13px] text-[#b3b3b3]">Scala Fitness</div>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <span class="obg-badge-verde">Você chegou ao fim</span>
+      </div>
+
+      <h1 class="m-0 mb-3 text-[28px] font-extrabold leading-[1.2] tracking-[-0.02em]">
+        Você deu o primeiro passo, <span data-nome>Lucas</span>.
+      </h1>
+      <p class="m-0 mb-6 text-[15px] leading-[1.55] text-[#a3a3a3]">
+        Agora é com a gente: seu <strong class="text-white">gestor de carreira</strong> já recebeu o seu diagnóstico e vai te chamar no WhatsApp <strong class="text-white" data-telefone>(41) 99999-0000</strong>.
+      </p>
+
+      <div id="card-meta" class="obg-card obg-card-laranja mb-4 text-center">
+        <div class="obg-label mb-3">A base da sua conversa</div>
+        <div class="mb-2 text-[28px] font-extrabold tracking-[-0.02em]">
+          <span class="text-white" data-fatura>R$ 4.000</span>
+          <span class="text-[#22c55e]"> → </span>
+          <span class="text-[#22c55e]" data-meta>R$ 10.000</span>
+        </div>
+        <p class="m-0 text-[13px] leading-[1.4] text-[#8a8a8a]">Do que você fatura hoje até a meta que você escolheu, por mês.</p>
+      </div>
+
+      <div class="obg-card mb-6">
+        <div class="obg-label mb-4">Para a conversa render mais</div>
+        <div class="flex flex-col gap-4">
+          <div class="flex items-start gap-3">
+            <span class="obg-check" aria-hidden="true">✓</span>
+            <span class="text-[14px] leading-[1.4]">Deixe o WhatsApp à mão, com o som ligado</span>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="obg-check" aria-hidden="true">✓</span>
+            <span class="text-[14px] leading-[1.4]">Tenha seus números em mente: hoje e a sua meta</span>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="obg-check" aria-hidden="true">✓</span>
+            <span class="text-[14px] leading-[1.4]">Pense no que mais está travando você agora</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-8 text-center">
+        <p class="m-0 mb-2 text-[17px] font-bold">Não precisa fazer mais nada agora.</p>
+        <p class="m-0 text-[13px] leading-[1.45] text-[#8a8a8a]">É só esperar a nossa mensagem. Pode fechar esta página.</p>
+      </div>
+
+      <div class="mb-3 flex justify-center">
+        <div class="flex h-12 w-12 items-center justify-center rounded-full border border-[rgba(232,79,28,0.4)] bg-[rgba(232,79,28,0.12)]">
+          <img src="/obrigado/logo-scala.svg" alt="" width="22" height="22" />
+        </div>
+      </div>
+      <p class="obg-rodape !pt-0">Treino muda o corpo. Método muda a carreira.</p>
+    </section>
+  </div>
+
+  <script src="/obrigado/obrigado.js"></script>
+</body>
+</html>

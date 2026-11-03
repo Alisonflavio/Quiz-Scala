@@ -112,6 +112,12 @@ export type ScalaEndingConfig = {
   videoPoster: string;
   /** não é mais exibida (tirada para reduzir ruído); mantida para formulários antigos */
   proofImage?: string;
+  /**
+   * Página de obrigado pós-diagnóstico (ex.: /obrigado.html).
+   * Recebe nome, whatsapp, renda, meta, email, insta, diagnostico e UTMs na query.
+   * Vazio = /obrigado.html. Use "inline" para manter o resultado antigo dentro do formulário.
+   */
+  thankYouUrl?: string;
 };
 
 export type Theme = {

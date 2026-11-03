@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeScala, diagnosticoPorResposta, scoreLevel } from "@/lib/scala";
+import { buildObrigadoUrl, computeScala, diagnosticoPorResposta, scoreLevel } from "@/lib/scala";
 
 const base = { renda: "5000", aumento: "5000", horas: "40", objetivo: "renda_online" };
 
@@ -101,5 +101,28 @@ describe("diagnosticoPorResposta", () => {
 
   it("deve_funcionar_com_respostas_antigas_sem_dor_nem_venda", () => {
     expect(pares({ ...base })).toHaveLength(1);
+  });
+});
+
+describe("buildObrigadoUrl", () => {
+  it("deve_montar_query_com_nome_whatsapp_renda_e_meta", () => {
+    const r = computeScala(base)!;
+    const url = buildObrigadoUrl(
+      "/obrigado.html",
+      { ...base, nome: "Lucas", whatsapp: "41999990000", email: "a@b.com", insta: "@lucas" },
+      { utm_source: "ig" },
+      r,
+    );
+    expect(url.startsWith("/obrigado.html?")).toBe(true);
+    const q = new URL(url, "https://example.com").searchParams;
+    expect(q.get("nome")).toBe("Lucas");
+    expect(q.get("whatsapp")).toBe("41999990000");
+    expect(q.get("telefone")).toBe("41999990000");
+    expect(q.get("renda")).toBe("5000");
+    expect(q.get("meta")).toBe("10000");
+    expect(q.get("email")).toBe("a@b.com");
+    expect(q.get("insta")).toBe("@lucas");
+    expect(q.get("utm_source")).toBe("ig");
+    expect(q.get("diagnostico")).toContain("Especialista");
   });
 });
