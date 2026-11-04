@@ -233,3 +233,31 @@ export function buildObrigadoUrl(
   }
   return url.toString();
 }
+
+/** Guarda os dados na sessão (backup) e leva a pessoa para a página de obrigado. */
+export function irParaObrigado(base: string, vars: Record<string, string>, utm: Record<string, string> = {}): void {
+  const result = computeScala(vars);
+  const dest = buildObrigadoUrl(base, vars, utm, result);
+  try {
+    const renda = result?.renda ?? (Number(vars.renda) || 0);
+    const aumento = result?.aumento ?? (Number(vars.aumento) || 0);
+    sessionStorage.setItem(
+      "scala_obrigado",
+      JSON.stringify({
+        nome: vars.nome || "",
+        telefone: vars.whatsapp || vars.telefone || "",
+        whatsapp: vars.whatsapp || vars.telefone || "",
+        email: vars.email || "",
+        insta: vars.insta || "",
+        renda,
+        fatura: renda,
+        aumento,
+        meta: result?.meta ?? (renda && aumento ? renda + aumento : 0),
+        diagnostico: result?.label || "",
+        area: result?.diagnosis.area || "",
+        gargalo: result?.diagnosis.gargalo || "",
+      }),
+    );
+  } catch {}
+  window.location.assign(dest);
+}

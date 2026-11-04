@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { interpolate, optionLabelFor } from "@/lib/engine";
-import { brl, computeScala, diagnosticoPorResposta, scoreLevel } from "@/lib/scala";
+import { brl, computeScala, diagnosticoPorResposta, irParaObrigado, scoreLevel } from "@/lib/scala";
 import { SCALA_WA_MESSAGE } from "@/lib/templates";
 import { alpha, onColor } from "@/lib/theme";
 import type { Field, FormDoc } from "@/lib/types";
@@ -651,7 +651,9 @@ export default function ScalaDiagnosis({ doc, field, vars: initialVars, utm, res
         onClick={() => {
           event("validou_sim");
           if (!preview) trackEvent(doc.settings, "DiagnosticoConfirmado", true);
-          go("solution");
+          const thankYou = (cfg.thankYouUrl || "/obrigado").trim();
+          if (preview || thankYou === "inline") go("solution");
+          else irParaObrigado(thankYou, vars, utm);
         }}
         className="w-full px-5 py-4 text-lg font-bold shadow-lg"
         style={btn}
