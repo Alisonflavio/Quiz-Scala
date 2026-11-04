@@ -100,18 +100,6 @@
     cardMeta.classList.add('hidden');
   }
 
-  // Resumo do diagnóstico (subpágina)
-  [['diagnostico', dados.diagnostico], ['area', dados.area], ['gargalo', dados.gargalo]].forEach(function (par) {
-    document.querySelectorAll('[data-' + par[0] + ']').forEach(function (el) {
-      if (par[1]) el.textContent = par[1];
-      else if (el.closest('[data-opcional]')) el.closest('[data-opcional]').classList.add('hidden');
-    });
-  });
-  var btnVoltar = document.getElementById('btn-voltar-fim');
-  if (btnVoltar) btnVoltar.addEventListener('click', function () { mostrar('fim'); });
-  var btnPlano = document.getElementById('btn-ir-plano');
-  if (btnPlano) btnPlano.addEventListener('click', function () { mostrar('plano'); });
-
   // Corrigir telefone
   var btnCorrigir = document.getElementById('btn-corrigir-tel');
   var caixaEditar = document.getElementById('tel-editar');
@@ -153,7 +141,6 @@
     obrigado: document.getElementById('tela-obrigado'),
     aula: document.getElementById('tela-aula'),
     fim: document.getElementById('tela-fim'),
-    plano: document.getElementById('tela-plano'),
   };
 
   function mostrar(nome) {
@@ -167,8 +154,8 @@
   }
 
   var hash = (location.hash || '').replace('#', '');
-  if (telas[hash] && hash !== 'obrigado') mostrar(hash);
-  else if (telas[q.get('tela')] && q.get('tela') !== 'obrigado') mostrar(q.get('tela'));
+  if (hash === 'aula' || hash === 'fim') mostrar(hash);
+  else if (q.get('tela') === 'aula' || q.get('tela') === 'fim') mostrar(q.get('tela'));
 
   var btnAula = document.getElementById('btn-ir-aula');
   if (btnAula && btnAula.tagName === 'A') {
