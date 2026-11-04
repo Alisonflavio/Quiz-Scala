@@ -157,6 +157,9 @@
   if (hash === 'aula' || hash === 'fim') mostrar(hash);
   else if (q.get('tela') === 'aula' || q.get('tela') === 'fim') mostrar(q.get('tela'));
 
+  var btnFim = document.getElementById('btn-ir-fim');
+  if (btnFim) btnFim.addEventListener('click', function () { mostrar('fim'); });
+
   var btnAula = document.getElementById('btn-ir-aula');
   if (btnAula && btnAula.tagName === 'A') {
     // Leva para a VSL levando junto as UTMs da URL atual
