@@ -124,7 +124,7 @@ export default function AuthCard({
       footer={
         withName && loginHref ? (
           <p className="mt-6 text-sm text-white/55">
-            Já tem conta?{" "}
+            Já tenho conta?{" "}
             <a href={loginHref} className="font-semibold text-white underline-offset-4 hover:underline">
               Entrar
             </a>
