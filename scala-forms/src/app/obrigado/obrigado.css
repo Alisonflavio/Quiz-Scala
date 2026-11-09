@@ -1,0 +1,175 @@
+/* Estilos da página de obrigado (/obrigado). Classes "obg-*" usadas em src/components/obrigado. */
+:root {
+  --scala-laranja: #ff6432;
+  --scala-verde: #22c55e;
+  --scala-card: #141414;
+  --scala-borda: #2a2a2a;
+}
+.obrigado {
+  font-family: var(--font-montserrat), Montserrat, system-ui, sans-serif;
+  background: #000;
+  color: #fff;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+.obg-shell {
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  padding: 28px 20px 40px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+.obg-logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+.obg-logo img {
+  width: 150px;
+  height: auto;
+}
+.obg-linha {
+  position: relative;
+}
+.obg-linha::before {
+  content: "";
+  position: absolute;
+  left: 13px;
+  top: 30px;
+  bottom: -14px;
+  width: 2px;
+  background: #2a2a2a;
+}
+.obg-linha:last-child::before {
+  display: none;
+}
+.obg-tela {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+}
+.obg-tela.ativa {
+  display: flex;
+}
+.obg-rodape {
+  margin-top: auto;
+  padding-top: 32px;
+  text-align: center;
+  color: #6b6b6b;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.obg-badge-verde {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(34, 197, 94, 0.45);
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+}
+.obg-badge-laranja {
+  display: inline-flex;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 100, 50, 0.55);
+  background: rgba(255, 100, 50, 0.12);
+  color: var(--scala-laranja);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+}
+.obg-card {
+  background: var(--scala-card);
+  border: 1px solid var(--scala-borda);
+  border-radius: 18px;
+  padding: 18px 16px;
+}
+.obg-card-laranja {
+  border: 2px solid #ff6432;
+  background: #140a06;
+}
+.obg-label {
+  color: #8a8a8a;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.obg-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  border: 0;
+  border-radius: 14px;
+  background: var(--scala-laranja);
+  color: #fff;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.2;
+  padding: 16px 18px;
+  cursor: pointer;
+  text-decoration: none;
+}
+.obg-btn span {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.9;
+}
+.obg-check {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--scala-verde);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 800;
+}
+.obg-step {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+}
+.obg-step.ativo {
+  background: var(--scala-laranja);
+  color: #fff;
+}
+.obg-step.pendente {
+  border: 1px solid #3a3a3a;
+  color: #8a8a8a;
+  background: transparent;
+}
+.obg-player {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.obg-player iframe {
+  width: 100%;
+  height: 100%;
+}
