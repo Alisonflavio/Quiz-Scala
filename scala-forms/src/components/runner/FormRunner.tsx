@@ -12,6 +12,12 @@ import { loadTrackers, trackConversion, trackEvent } from "./trackers";
 
 type Props = { formId: string; doc: FormDoc; preview: boolean };
 
+/** Tentativas de envio na conclusão e espera base entre elas (cresce a cada tentativa). */
+const SEND_ATTEMPTS = 3;
+const SEND_RETRY_MS = 1500;
+const SEND_FAILED_MESSAGE =
+  "Não conseguimos enviar suas respostas. Confira sua internet e toque no botão de novo.";
+
 function readUtm() {
   const out: Record<string, string> = {};
   if (typeof window === "undefined") return out;
@@ -126,6 +132,8 @@ export default function FormRunner({ formId, doc, preview }: Props) {
   const responseId = useRef<string | undefined>(undefined);
   const [savedId, setSavedId] = useState<string | undefined>(undefined);
   const converted = useRef(false);
+  const finishing = useRef(false);
+  const [sending, setSending] = useState(false);
   // UTMs do link (ou guardadas na sessão, se a pessoa navegou antes de chegar aqui)
   const [utm] = useState<Record<string, string>>(readUtm);
   const [seed] = useState(() => Math.random().toString(36));
@@ -145,30 +153,40 @@ export default function FormRunner({ formId, doc, preview }: Props) {
     if (!preview) loadTrackers(s);
   }, [preview, s]);
 
+  /**
+   * Envia as respostas. Parcial: uma tentativa (falha não trava a pessoa).
+   * Conclusão: até SEND_ATTEMPTS tentativas com espera crescente; se todas falharem, devolve `false`
+   * e quem chamou mostra a mensagem de erro com a opção de tentar de novo.
+   */
   const send = useCallback(
     async (ans: Record<string, AnswerValue>, complete: boolean, endingId: string | null) => {
       if (preview) return true;
-      try {
-        const res = await fetch(`/api/f/${formId}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ responseId: responseId.current, answers: ans, complete, endingId, utm: utm }),
-          keepalive: true,
-        });
-        const data = await res.json().catch(() => ({}));
-        if (res.status === 409 && data.error === "duplicate") {
-          setFatal("Você já respondeu este formulário. Obrigado!");
-          return false;
+      const attempts = complete ? SEND_ATTEMPTS : 1;
+      for (let i = 0; i < attempts; i++) {
+        if (i > 0) await new Promise((r) => setTimeout(r, SEND_RETRY_MS * i));
+        try {
+          const res = await fetch(`/api/f/${formId}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ responseId: responseId.current, answers: ans, complete, endingId, utm: utm }),
+            keepalive: true,
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.status === 409 && data.error === "duplicate") {
+            setFatal("Você já respondeu este formulário. Obrigado!");
+            return false;
+          }
+          if (!res.ok) continue;
+          if (data.responseId) {
+            responseId.current = data.responseId;
+            setSavedId(data.responseId);
+          }
+          return true;
+        } catch {
+          // sem internet ou queda de conexão: tenta de novo
         }
-        if (!res.ok) return !complete; // falha no parcial não trava a pessoa
-        if (data.responseId) {
-          responseId.current = data.responseId;
-          setSavedId(data.responseId);
-        }
-        return true;
-      } catch {
-        return !complete;
       }
+      return !complete; // falha no parcial não trava a pessoa
     },
     [formId, preview, utm],
   );
@@ -196,8 +214,17 @@ export default function FormRunner({ formId, doc, preview }: Props) {
       const nxtField = doc.fields.find((f) => f.id === nxt);
       const ending = !nxtField || nxtField.type === "thankyou";
       if (ending) {
+        if (finishing.current) return; // toque duplo no último botão: o primeiro envio já está em andamento
+        finishing.current = true;
+        setError("");
+        setSending(true);
         const ok = await save(ans, true, nxtField?.id ?? null);
-        if (!ok) return;
+        setSending(false);
+        finishing.current = false;
+        if (!ok) {
+          setError(SEND_FAILED_MESSAGE);
+          return;
+        }
         if (s.conversion.mode === "complete") convert();
         setFinished(true);
       } else if (Object.keys(ans).length > 0) {
@@ -374,6 +401,7 @@ export default function FormRunner({ formId, doc, preview }: Props) {
               vars={vars}
               value={answers[field.id]}
               error={error}
+              sending={sending}
               seed={seed}
               onChange={(v) => {
                 setAnswers((a) => ({ ...a, [field.id]: v }));
@@ -509,6 +537,8 @@ type ViewProps = {
   vars: Record<string, string>;
   value: AnswerValue | undefined;
   error: string;
+  /** `true` enquanto a conclusão está sendo enviada ao servidor */
+  sending: boolean;
   seed: string;
   onChange: (v: AnswerValue) => void;
   onSubmit: (v?: AnswerValue) => void;
@@ -524,6 +554,7 @@ function FieldView({
   vars,
   value,
   error,
+  sending,
   seed,
   onChange,
   onSubmit,
@@ -703,8 +734,15 @@ function FieldView({
         </div>
       )}
 
+      {sending && (
+        <p className="mt-4 text-sm" style={{ color: alpha(t.answerColor, 0.7) }} role="status">
+          Enviando suas respostas...
+        </p>
+      )}
+
       {error && (
         <p
+          role="alert"
           className="mt-4 inline-block rounded px-3 py-1.5 text-sm"
           style={{ background: "#fde2e2", color: "#b42318" }}
         >
