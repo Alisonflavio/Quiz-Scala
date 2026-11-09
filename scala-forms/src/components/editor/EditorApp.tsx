@@ -124,9 +124,15 @@ export default function EditorApp({ id, initialTitle, initialDoc, publishedJson 
     });
   };
 
+  const [publishError, setPublishError] = useState("");
   const publish = () =>
     start(async () => {
-      await publishAction(id, title, doc);
+      setPublishError("");
+      const res = await publishAction(id, title, doc);
+      if (!res.ok) {
+        setPublishError(res.error ?? "Não foi possível publicar.");
+        return;
+      }
       setPublished(stable(doc));
       setSaveState("saved");
     });
@@ -166,6 +172,12 @@ export default function EditorApp({ id, initialTitle, initialDoc, publishedJson 
           </>
         }
       />
+
+      {publishError && (
+        <div role="alert" className="border-b border-rose-200 bg-rose-50 px-6 py-3 text-sm text-rose-700">
+          {publishError}
+        </div>
+      )}
 
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
         <FieldList

@@ -45,7 +45,10 @@ async function run() {
 
 describe("dispatchIntegrations — novas tentativas", () => {
   it("deve_tentar_de_novo_em_erro_5xx_e_registrar_o_sucesso", async () => {
-    safePostJson.mockResolvedValueOnce(status(500)).mockResolvedValueOnce(status(502)).mockResolvedValueOnce(status(200));
+    safePostJson
+      .mockResolvedValueOnce(status(500))
+      .mockResolvedValueOnce(status(502))
+      .mockResolvedValueOnce(status(200));
     const log = await run();
     expect(safePostJson).toHaveBeenCalledTimes(3);
     expect(log[0]).toMatchObject({ target: "webhook", ok: true, status: 200 });

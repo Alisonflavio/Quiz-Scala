@@ -15,8 +15,7 @@ type Props = { formId: string; doc: FormDoc; preview: boolean };
 /** Tentativas de envio na conclusão e espera base entre elas (cresce a cada tentativa). */
 const SEND_ATTEMPTS = 3;
 const SEND_RETRY_MS = 1500;
-const SEND_FAILED_MESSAGE =
-  "Não conseguimos enviar suas respostas. Confira sua internet e toque no botão de novo.";
+const SEND_FAILED_MESSAGE = "Não conseguimos enviar suas respostas. Confira sua internet e toque no botão de novo.";
 
 function readUtm() {
   const out: Record<string, string> = {};
@@ -117,7 +116,6 @@ function LoadingReveal({ acc, color }: { acc: string; color: string }) {
     </div>
   );
 }
-
 
 export default function FormRunner({ formId, doc, preview }: Props) {
   const t = doc.theme;

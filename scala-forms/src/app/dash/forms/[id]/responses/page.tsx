@@ -315,7 +315,8 @@ export default async function ResponsesPage(props: PageProps<"/dash/forms/[id]/r
                   {sel.webhook_log?.length ? (
                     sel.webhook_log.map((l, i) => (
                       <div key={i} className={l.ok ? "text-emerald-300" : "text-rose-400"}>
-                        {l.ok ? "✓" : "✕"} {l.target} · {fmt(l.at)} {l.status ? `· HTTP ${l.status}` : ""} {l.error ?? ""}
+                        {l.ok ? "✓" : "✕"} {l.target} · {fmt(l.at)} {l.status ? `· HTTP ${l.status}` : ""}{" "}
+                        {l.error ?? ""}
                       </div>
                     ))
                   ) : (
