@@ -1,21 +1,17 @@
 # Quiz Scala
 
-Projeto da Personal Trainer Academy (Scala Fitness). Dois blocos independentes:
+Projeto da Personal Trainer Academy (Mentoria Scala Fitness). Todo o sistema fica em [`scala-forms/`](scala-forms/README.md): app Next.js com o criador de formulários, o Diagnóstico Scala, a página de obrigado e o painel de respostas.
 
 | Pasta / arquivo | O que é |
 |---|---|
-| `index.html` | Página inicial do quiz (HTML estático). |
-| `scala-forms/` | App Next.js: criador de formulários/quizzes, respostas, integrações e Diagnóstico Scala. Veja o [README](scala-forms/README.md) para rodar, testar e publicar. |
-| `brand/` | Logos e selo (SVG) da marca. |
-| `video/`, `prova-vendas.jpg` | Mídias usadas pela página inicial. |
+| `scala-forms/` | O app (código, testes e [documentação](scala-forms/docs/)) |
+| `.editorconfig` | Indentação, fim de linha e charset para qualquer editor |
+| `.mcp.json` | Conexão do Claude Code com o Supabase do projeto |
+
+O protótipo antigo em HTML estático (`index.html`, `brand/`, `video/`, `prova-vendas.jpg`) foi removido em novembro/2026; continua no histórico do git.
 
 ## Padrões do repositório
 
-- `.editorconfig` define indentação, fim de linha e charset (valem para qualquer editor).
-- Formatação e lint do app ficam em `scala-forms/` (`npm run format`, `npm run lint`).
-- Segredos só em variáveis de ambiente; use `scala-forms/.env.example` como modelo e nunca commite `.env*`.
+- Formatação e lint em `scala-forms/` (`npm run format`, `npm run lint`).
+- Segredos só em variáveis de ambiente; modelo em `scala-forms/.env.example`. Nunca commite `.env*`.
 - Commits no padrão Conventional Commits (`feat:`, `fix:`, `refactor:`, `docs:`, `chore:`).
-
-## Pendências conhecidas
-
-- `brand/`, `video/` e `prova-vendas.jpg` estão duplicados em `scala-forms/public/`. Plano: manter só a cópia do app e apontar a página inicial para ela (depende de como a página inicial é publicada).

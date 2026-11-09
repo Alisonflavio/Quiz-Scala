@@ -16,7 +16,9 @@ export async function GET(req: Request, ctx: RouteContext<"/api/forms/[id]/expor
   const cols: string[] = [];
   for (const r of rows) for (const k of Object.keys(r)) if (!cols.includes(k)) cols.push(k);
   const esc = (v: unknown) => {
-    const s = String(v ?? "");
+    let s = String(v ?? "");
+    // resposta que começa com = + - @ viraria fórmula no Excel/Planilhas (CSV injection): vira texto
+    if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
     return /[";\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   // ponto e vírgula + BOM: o Excel em português abre com acentos e colunas certas
