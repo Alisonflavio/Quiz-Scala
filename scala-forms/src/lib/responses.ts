@@ -59,7 +59,8 @@ export function flatten(doc: FormDoc, r: ResponseRow, formTitle: string) {
     const sc = computeScala({ ...variables(doc, r.answers), ...corr });
     if (sc) {
       out.diagnostico = sc.label;
-      out.gargalo = sc.diagnosis.area;
+      out.area = sc.diagnosis.area;
+      out.gargalo = sc.diagnosis.gargalo;
       out.renda_meta = sc.meta;
       out.prisao_pct = sc.pct;
       out.meta_pct = sc.pctMeta;
@@ -69,6 +70,11 @@ export function flatten(doc: FormDoc, r: ResponseRow, formTitle: string) {
     out.clicou_whatsapp = r.status === "complete" ? (evs.includes("clicou_whatsapp") ? "sim" : "não") : "";
     const visto = ["video_100", "video_75", "video_50", "video_25"].find((e) => evs.includes(e));
     out.video_assistido = visto ? `${visto.replace("video_", "")}%` : evs.includes("video_play") ? "iniciou" : "";
+    const aula = ["aula_100", "aula_75", "aula_50", "aula_25"].find((e) => evs.includes(e));
+    out.aula_assistida = aula ? `${aula.replace("aula_", "")}%` : evs.includes("aula_play") ? "iniciou" : "";
+    out.chegou_fim = evs.includes("chegou_fim") ? "sim" : "";
+    const tel = r.meta?.telefone_corrigido;
+    if (typeof tel === "string" && tel) out.telefone_corrigido = tel;
   }
   for (const [k, v] of Object.entries(r.utm ?? {})) out[k] = v;
   return out;

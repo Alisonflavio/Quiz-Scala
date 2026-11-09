@@ -18,7 +18,19 @@ const EVENTS = [
   "video_50",
   "video_75",
   "video_100",
+  // página de obrigado (/obrigado)
+  "telefone_corrigido",
+  "abriu_aula",
+  "aula_play",
+  "aula_25",
+  "aula_50",
+  "aula_75",
+  "aula_100",
+  "chegou_fim",
 ];
+
+/** Eventos de progresso de vídeo: ficam só na resposta (painel), não vão para webhook/planilha. */
+const isProgress = (e: string) => e.startsWith("video_") || e.startsWith("aula_");
 
 /* Eventos do diagnóstico (confirmou, corrigiu, clicou no WhatsApp): ficam na resposta e são enviados às integrações */
 export async function POST(req: Request, ctx: RouteContext<"/api/f/[id]/event">) {
@@ -44,6 +56,12 @@ export async function POST(req: Request, ctx: RouteContext<"/api/f/[id]/event">)
   if (body.event === "corrigiu" && body.vars) {
     patch.correcao = { renda: body.vars.renda, aumento: body.vars.aumento, horas: body.vars.horas };
   }
+  // telefone corrigido na página de obrigado: só dígitos, 10 a 13 (com ou sem 55)
+  if (body.event === "telefone_corrigido") {
+    const tel = String(body.vars?.telefone ?? "").replace(/\D/g, "");
+    if (tel.length < 10 || tel.length > 13) return NextResponse.json({ error: "Telefone inválido" }, { status: 400 });
+    patch.telefone_corrigido = tel;
+  }
   // teto de eventos por resposta: a lista não cresce sem limite se alguém repetir chamadas
   if (((r.meta?.events as unknown[] | undefined)?.length ?? 0) >= MAX_EVENTS_PER_RESPONSE)
     return NextResponse.json({ ok: true });
@@ -53,8 +71,7 @@ export async function POST(req: Request, ctx: RouteContext<"/api/f/[id]/event">)
     [r.id, json([ev]), json(patch)],
   );
   const updated = await getResponse(r.id);
-  // o progresso do vídeo só fica guardado na resposta (painel); não vai para webhook/planilha
-  if (updated && !body.event.startsWith("video_"))
+  if (updated && !isProgress(body.event))
     await dispatchIntegrations(form.published, updated, form.title, body.event);
   return NextResponse.json({ ok: true });
 }

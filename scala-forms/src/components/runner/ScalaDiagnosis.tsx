@@ -653,7 +653,7 @@ export default function ScalaDiagnosis({ doc, field, vars: initialVars, utm, res
           if (!preview) trackEvent(doc.settings, "DiagnosticoConfirmado", true);
           const thankYou = (cfg.thankYouUrl || "/obrigado").trim();
           if (preview || thankYou === "inline") go("solution");
-          else irParaObrigado(thankYou, vars, utm);
+          else irParaObrigado(thankYou, vars, utm, { responseId, formId });
         }}
         className="w-full px-5 py-4 text-lg font-bold shadow-lg"
         style={btn}

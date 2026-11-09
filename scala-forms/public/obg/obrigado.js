@@ -26,7 +26,7 @@
     var salvo = {};
     try {
       salvo = JSON.parse(sessionStorage.getItem(STORAGE) || '{}') || {};
-    } catch (e) {}
+    } catch {}
 
     // Campos do Diagnóstico Scala (scala-forms): nome, whatsapp, renda, aumento, email, insta…
     var renda = numeroReais(pick(q.get('renda'), q.get('fatura'), salvo.renda, salvo.fatura));
@@ -46,17 +46,49 @@
       diagnostico: pick(q.get('diagnostico'), q.get('label'), salvo.diagnostico),
       gargalo: pick(q.get('gargalo'), salvo.gargalo),
       area: pick(q.get('area'), salvo.area),
+      // ids da resposta e do formulário: usados para registrar os eventos desta página
+      rid: pick(q.get('rid'), salvo.rid),
+      fid: pick(q.get('fid'), salvo.fid),
     };
+  }
+
+  /** Mostra/esconde um elemento (atributo `hidden` e classe `hidden`, para valer com qualquer CSS). */
+  function exibir(el, sim) {
+    if (!el) return;
+    el.hidden = !sim;
+    el.classList.toggle('hidden', !sim);
+  }
+
+  /** Registra um evento na resposta (painel e integrações). Sem ids, não faz nada. */
+  function evento(nome, extra) {
+    if (!dados.rid || !dados.fid) return;
+    var corpo = { responseId: dados.rid, event: nome };
+    if (extra) corpo.vars = extra;
+    try {
+      fetch('/api/f/' + encodeURIComponent(dados.fid) + '/event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(corpo),
+        keepalive: true,
+      }).catch(function () {});
+    } catch {}
+  }
+
+  /** Evento no Pixel da Meta, quando a página foi servida com o Pixel do formulário. */
+  function pixel(nome) {
+    try {
+      if (window.fbq) window.fbq('trackCustom', nome);
+    } catch {}
   }
 
   function salvarDados(dados) {
     try {
       sessionStorage.setItem(STORAGE, JSON.stringify(dados));
-    } catch (e) {}
+    } catch {}
   }
 
   function primeiroNome(nome) {
-    if (!nome) return 'Lucas';
+    if (!nome) return '';
     return nome.split(/\s+/)[0];
   }
 
@@ -65,7 +97,7 @@
     if (d.length > 11 && d.indexOf('55') === 0) d = d.slice(2);
     if (d.length === 11) return '(' + d.slice(0, 2) + ') ' + d.slice(2, 7) + '-' + d.slice(7);
     if (d.length === 10) return '(' + d.slice(0, 2) + ') ' + d.slice(2, 6) + '-' + d.slice(6);
-    return digitos || '(41) 99999-0000';
+    return digitos || '';
   }
 
   function formatarReais(valor) {
@@ -77,12 +109,25 @@
   var dados = lerDados();
   salvarDados(dados);
 
+  // sem dados (página aberta direto), os trechos com nome/telefone/valores ficam escondidos: nada de dado inventado
+  var nome = primeiroNome(dados.nome);
   document.querySelectorAll('[data-nome]').forEach(function (el) {
-    el.textContent = primeiroNome(dados.nome);
+    el.textContent = nome;
   });
-  document.querySelectorAll('[data-telefone]').forEach(function (el) {
-    el.textContent = formatarTelefone(dados.telefone);
+  document.querySelectorAll('[data-nome-wrap]').forEach(function (el) {
+    exibir(el, !!nome);
   });
+
+  function mostrarTelefone() {
+    var tel = formatarTelefone(dados.telefone);
+    document.querySelectorAll('[data-telefone]').forEach(function (el) {
+      el.textContent = tel || 'Não informado';
+    });
+    document.querySelectorAll('[data-telefone-wrap]').forEach(function (el) {
+      exibir(el, !!tel);
+    });
+  }
+  mostrarTelefone();
 
   var cardMeta = document.getElementById('card-meta');
   var faturaFmt = formatarReais(dados.fatura || dados.renda);
@@ -94,10 +139,13 @@
     document.querySelectorAll('[data-meta]').forEach(function (el) {
       el.textContent = metaFmt;
     });
-    if (cardMeta) cardMeta.classList.remove('hidden');
-  } else if (cardMeta) {
+    exibir(cardMeta, true);
+    document.querySelectorAll('[data-meta-wrap]').forEach(function (el) {
+      exibir(el, true);
+    });
+  } else {
     // Sem renda/meta do formulário: esconde o card (não inventa número)
-    cardMeta.classList.add('hidden');
+    exibir(cardMeta, false);
   }
 
   // Corrigir telefone
@@ -109,9 +157,9 @@
   function atualizarTelefone(digitos) {
     dados.telefone = digitos;
     salvarDados(dados);
-    document.querySelectorAll('[data-telefone]').forEach(function (el) {
-      el.textContent = formatarTelefone(digitos);
-    });
+    mostrarTelefone();
+    // grava a correção na resposta (painel e integrações), não só neste navegador
+    evento('telefone_corrigido', { telefone: digitos });
   }
 
   if (btnCorrigir && caixaEditar && inputTel && btnSalvar) {
@@ -143,14 +191,23 @@
     fim: document.getElementById('tela-fim'),
   };
 
+  var telasVistas = {};
   function mostrar(nome) {
     Object.keys(telas).forEach(function (k) {
       telas[k].classList.toggle('ativa', k === nome);
     });
+    if (!telasVistas[nome]) {
+      telasVistas[nome] = true;
+      if (nome === 'aula') evento('abriu_aula');
+      if (nome === 'fim') {
+        evento('chegou_fim');
+        pixel('ObrigadoFim');
+      }
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
     try {
       history.replaceState(null, '', '#' + nome);
-    } catch (e) {}
+    } catch {}
   }
 
   var hash = (location.hash || '').replace('#', '');
@@ -170,7 +227,7 @@
         if (v && !dest.searchParams.has(k)) dest.searchParams.set(k, v);
       });
       btnAula.href = dest.toString();
-    } catch (e) {}
+    } catch {}
   } else if (btnAula) {
     btnAula.addEventListener('click', function () {
       mostrar('aula');
@@ -186,6 +243,17 @@
   var player = null;
   var iniciado = false;
   var testePitch = parseInt(q.get('pitch'), 10);
+
+  // quanto da aula foi assistido: cada marco (25/50/75/100%) é registrado uma vez só
+  var marcosEnviados = {};
+  function marcarProgresso(pct) {
+    [25, 50, 75, 100].forEach(function (m) {
+      if (marcosEnviados[m] || pct < (m === 100 ? 95 : m)) return;
+      marcosEnviados[m] = true;
+      evento('aula_' + m);
+      if (m === 75) pixel('Aula75');
+    });
+  }
 
   window.onYouTubeIframeAPIReady = function () {
     player = new YT.Player('aula-player', {
@@ -205,6 +273,7 @@
       events: {
         onStateChange: function (e) {
           if (e.data === YT.PlayerState.ENDED) {
+            marcarProgresso(100);
             iniciado = false;
             capa.classList.remove('hidden');
             mostrar('fim');
@@ -218,6 +287,11 @@
     if (!player || !player.playVideo) return;
     if (!iniciado) {
       iniciado = true;
+      if (!marcosEnviados.play) {
+        marcosEnviados.play = true;
+        evento('aula_play');
+        pixel('AulaPlay');
+      }
       capa.classList.add('hidden');
       player.unMute();
       player.setVolume(100);
@@ -242,7 +316,9 @@
       iniciado = false;
       return;
     }
-    if (barra) barra.style.width = Math.min(100, (atual / duracao) * 100) + '%';
+    var pct = Math.min(100, (atual / duracao) * 100);
+    if (barra) barra.style.width = pct + '%';
+    marcarProgresso(pct);
   }, 250);
 
   var api = document.createElement('script');

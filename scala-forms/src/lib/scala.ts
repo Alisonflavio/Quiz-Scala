@@ -198,12 +198,16 @@ export function scoreLevel(score: number): { label: string; color: string } {
   return { label: "Bom", color: "#2FBF71" };
 }
 
+/** Ids que a página de obrigado usa para registrar os próprios eventos (vídeo, telefone corrigido, fim). */
+export type ObrigadoIds = { responseId?: string; formId?: string };
+
 /** Monta a URL da página de obrigado com os dados do diagnóstico na query. */
 export function buildObrigadoUrl(
   base: string,
   vars: Record<string, string>,
   utm: Record<string, string> = {},
   result: ScalaResult | null = null,
+  ids: ObrigadoIds = {},
 ): string {
   const url = new URL(base, typeof window !== "undefined" ? window.location.origin : "https://localhost");
   const renda = result?.renda ?? (Number(vars.renda) || 0);
@@ -226,6 +230,8 @@ export function buildObrigadoUrl(
   if (result?.label) set("diagnostico", result.label);
   if (result?.diagnosis?.area) set("area", result.diagnosis.area);
   if (result?.diagnosis?.gargalo) set("gargalo", result.diagnosis.gargalo);
+  set("rid", ids.responseId);
+  set("fid", ids.formId);
   for (const [k, v] of Object.entries(utm)) set(k, v);
   // devolve path+query+hash relativo se a base for relativa
   if (base.startsWith("/") || base.startsWith("./") || !/^https?:/i.test(base)) {
@@ -235,9 +241,14 @@ export function buildObrigadoUrl(
 }
 
 /** Guarda os dados na sessão (backup) e leva a pessoa para a página de obrigado. */
-export function irParaObrigado(base: string, vars: Record<string, string>, utm: Record<string, string> = {}): void {
+export function irParaObrigado(
+  base: string,
+  vars: Record<string, string>,
+  utm: Record<string, string> = {},
+  ids: ObrigadoIds = {},
+): void {
   const result = computeScala(vars);
-  const dest = buildObrigadoUrl(base, vars, utm, result);
+  const dest = buildObrigadoUrl(base, vars, utm, result, ids);
   try {
     const renda = result?.renda ?? (Number(vars.renda) || 0);
     const aumento = result?.aumento ?? (Number(vars.aumento) || 0);
@@ -256,6 +267,8 @@ export function irParaObrigado(base: string, vars: Record<string, string>, utm: 
         diagnostico: result?.label || "",
         area: result?.diagnosis.area || "",
         gargalo: result?.diagnosis.gargalo || "",
+        rid: ids.responseId || "",
+        fid: ids.formId || "",
       }),
     );
   } catch {}

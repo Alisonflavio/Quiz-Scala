@@ -257,6 +257,7 @@ export default async function ResponsesPage(props: PageProps<"/dash/forms/[id]/r
                 const flat = flatten(doc, sel, form.title);
                 const extra = [
                   "diagnostico",
+                  "area",
                   "gargalo",
                   "renda_meta",
                   "prisao_pct",
@@ -264,6 +265,9 @@ export default async function ResponsesPage(props: PageProps<"/dash/forms/[id]/r
                   "confirmou_diagnostico",
                   "video_assistido",
                   "clicou_whatsapp",
+                  "aula_assistida",
+                  "chegou_fim",
+                  "telefone_corrigido",
                 ].filter((k) => flat[k] !== undefined && flat[k] !== "");
                 return extra.length ? (
                   <div className="border-t border-gray-200 bg-orange-50/40 px-7 py-6">

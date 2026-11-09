@@ -126,3 +126,12 @@ describe("buildObrigadoUrl", () => {
     expect(q.get("diagnostico")).toContain("Especialista");
   });
 });
+
+describe("buildObrigadoUrl — ids", () => {
+  it("deve_incluir_rid_e_fid_para_a_pagina_registrar_eventos", () => {
+    const url = buildObrigadoUrl("/obrigado", base, {}, computeScala(base), { responseId: "r1", formId: "f1" });
+    const q = new URL(url, "https://example.com").searchParams;
+    expect(q.get("rid")).toBe("r1");
+    expect(q.get("fid")).toBe("f1");
+  });
+});
