@@ -65,7 +65,7 @@ export default async function Dashboard(props: PageProps<"/dash">) {
                   )}
                 </div>
               </Link>
-              <FormCardActions id={f.id} title={f.title} />
+              <FormCardActions id={f.id} title={f.title} canDelete={user.role === "admin"} />
             </div>
           ))}
         </div>

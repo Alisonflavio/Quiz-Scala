@@ -105,33 +105,13 @@ describe("diagnosticoPorResposta", () => {
 });
 
 describe("buildObrigadoUrl", () => {
-  it("deve_montar_query_com_nome_whatsapp_renda_e_meta", () => {
-    const r = computeScala(base)!;
-    const url = buildObrigadoUrl(
-      "/obrigado",
-      { ...base, nome: "Lucas", whatsapp: "41999990000", email: "a@b.com", insta: "@lucas" },
-      { utm_source: "ig" },
-      r,
-    );
+  it("deve_levar_so_ids_e_utms_sem_dados_pessoais_na_url", () => {
+    const url = buildObrigadoUrl("/obrigado", { utm_source: "ig" }, { responseId: "r1", formId: "f1" });
     expect(url.startsWith("/obrigado?")).toBe(true);
-    const q = new URL(url, "https://example.com").searchParams;
-    expect(q.get("nome")).toBe("Lucas");
-    expect(q.get("whatsapp")).toBe("41999990000");
-    expect(q.get("telefone")).toBe("41999990000");
-    expect(q.get("renda")).toBe("5000");
-    expect(q.get("meta")).toBe("10000");
-    expect(q.get("email")).toBe("a@b.com");
-    expect(q.get("insta")).toBe("@lucas");
-    expect(q.get("utm_source")).toBe("ig");
-    expect(q.get("diagnostico")).toContain("Especialista");
-  });
-});
-
-describe("buildObrigadoUrl — ids", () => {
-  it("deve_incluir_rid_e_fid_para_a_pagina_registrar_eventos", () => {
-    const url = buildObrigadoUrl("/obrigado", base, {}, computeScala(base), { responseId: "r1", formId: "f1" });
     const q = new URL(url, "https://example.com").searchParams;
     expect(q.get("rid")).toBe("r1");
     expect(q.get("fid")).toBe("f1");
+    expect(q.get("utm_source")).toBe("ig");
+    for (const k of ["nome", "whatsapp", "telefone", "email", "insta", "renda", "meta"]) expect(q.has(k)).toBe(false);
   });
 });

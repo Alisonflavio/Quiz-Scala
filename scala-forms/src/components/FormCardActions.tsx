@@ -3,7 +3,8 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { deleteFormAction, duplicateFormAction } from "@/app/dash/actions";
 
-export default function FormCardActions({ id, title }: { id: string; title: string }) {
+/** Ações do cartão do formulário no painel. `canDelete`: só admin vê "Excluir". */
+export default function FormCardActions({ id, title, canDelete }: { id: string; title: string; canDelete: boolean }) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [, start] = useTransition();
@@ -41,15 +42,17 @@ export default function FormCardActions({ id, title }: { id: string; title: stri
           >
             Duplicar
           </button>
-          <button
-            className="block w-full px-4 py-2 text-left text-rose-400 hover:bg-rose-50"
-            onClick={() => {
-              if (confirm(`Excluir "${title}" e todas as respostas? Isso não pode ser desfeito.`))
-                start(() => deleteFormAction(id));
-            }}
-          >
-            Excluir
-          </button>
+          {canDelete && (
+            <button
+              className="block w-full px-4 py-2 text-left text-rose-400 hover:bg-rose-50"
+              onClick={() => {
+                if (confirm(`Excluir "${title}" e todas as respostas? Isso não pode ser desfeito.`))
+                  start(() => deleteFormAction(id));
+              }}
+            >
+              Excluir
+            </button>
+          )}
         </div>
       )}
     </div>

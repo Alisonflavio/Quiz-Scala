@@ -17,7 +17,9 @@ type Body = {
 export async function POST(req: Request, ctx: RouteContext<"/api/f/[id]">) {
   const { id } = await ctx.params;
   const ip = clientIp(req.headers);
-  if (!(await rateLimit("form-ip", `${id}:${ip}`, { max: 300, windowSeconds: 600 })))
+  // limites por IP folgados: operadora de celular (CGNAT) e Wi-Fi de academia colocam muita gente no mesmo IP.
+  // Cada pergunta respondida é uma requisição (~15 por formulário): 600/10 min ≈ 40 pessoas no mesmo IP.
+  if (!(await rateLimit("form-ip", `${id}:${ip}`, { max: 600, windowSeconds: 600 })))
     return NextResponse.json({ error: "Muitas requisições. Tente de novo em instantes." }, { status: 429 });
   const form = await getForm(id);
   const doc = form?.published;
@@ -57,7 +59,7 @@ export async function POST(req: Request, ctx: RouteContext<"/api/f/[id]">) {
   }
 
   // criar respostas novas é o que enche o banco: teto por IP e formulário
-  if (!body.responseId && !(await rateLimit("form-new", `${id}:${ip}`, { max: 40, windowSeconds: 3600 })))
+  if (!body.responseId && !(await rateLimit("form-new", `${id}:${ip}`, { max: 120, windowSeconds: 3600 })))
     return NextResponse.json({ error: "Muitas respostas deste endereço. Tente mais tarde." }, { status: 429 });
 
   const row = await saveResponse(id, form.title, doc, {

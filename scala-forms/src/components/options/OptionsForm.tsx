@@ -36,7 +36,8 @@ function Color({ label, value, onChange }: { label: string; value: string; onCha
   );
 }
 
-export default function OptionsForm({ id, fields }: { id: string; fields: Field[] }) {
+/** Aba Opções. `isAdmin`: só admin vê a "Zona perigosa" (excluir respostas e formulário). */
+export default function OptionsForm({ id, fields, isAdmin }: { id: string; fields: Field[]; isAdmin: boolean }) {
   const { title, setTitle, theme, setTheme, settings, setSettings } = useSettings();
   const [shareOpen, setShareOpen] = useState(false);
   const [pending, start] = useTransition();
@@ -237,36 +238,40 @@ export default function OptionsForm({ id, fields }: { id: string; fields: Field[
         />
       </Section>
 
-      <div className="mt-14 rounded-md border-2 border-rose-500 bg-rose-50 p-10">
-        <div className="text-xl font-semibold text-rose-400">Zona perigosa</div>
-        <div className="text-lg text-rose-400">Atenção, as ações abaixo não podem ser revertidas. Tenha cuidado.</div>
-        <div className="mt-10 text-xl font-semibold text-gray-800">Excluir todas as respostas</div>
-        <p className="text-gray-700">
-          Eventualmente é necessário recomeçar do zero. Essa opção exclui todas as respostas deste formulário. Faça um
-          backup primeiro ;)
-        </p>
-        <button
-          className="btn-danger mt-3"
-          disabled={pending}
-          onClick={() => {
-            if (confirm("Excluir TODAS as respostas deste formulário?")) start(() => deleteAllResponsesAction(id));
-          }}
-        >
-          Excluir respostas
-        </button>
-        <div className="my-8 border-t border-rose-200" />
-        <div className="text-xl font-semibold text-gray-800">Excluir formulário</div>
-        <p className="text-gray-700">Excluir formulário e respostas</p>
-        <button
-          className="btn-danger mt-3"
-          disabled={pending}
-          onClick={() => {
-            if (confirm("Excluir este formulário e todas as respostas?")) start(() => deleteFormAction(id));
-          }}
-        >
-          Excluir formulário
-        </button>
-      </div>
+      {isAdmin ? (
+        <div className="mt-14 rounded-md border-2 border-rose-500 bg-rose-50 p-10">
+          <div className="text-xl font-semibold text-rose-400">Zona perigosa</div>
+          <div className="text-lg text-rose-400">Atenção, as ações abaixo não podem ser revertidas. Tenha cuidado.</div>
+          <div className="mt-10 text-xl font-semibold text-gray-800">Excluir todas as respostas</div>
+          <p className="text-gray-700">
+            Eventualmente é necessário recomeçar do zero. Essa opção exclui todas as respostas deste formulário. Faça um
+            backup primeiro ;)
+          </p>
+          <button
+            className="btn-danger mt-3"
+            disabled={pending}
+            onClick={() => {
+              if (confirm("Excluir TODAS as respostas deste formulário?")) start(() => deleteAllResponsesAction(id));
+            }}
+          >
+            Excluir respostas
+          </button>
+          <div className="my-8 border-t border-rose-200" />
+          <div className="text-xl font-semibold text-gray-800">Excluir formulário</div>
+          <p className="text-gray-700">Excluir formulário e respostas</p>
+          <button
+            className="btn-danger mt-3"
+            disabled={pending}
+            onClick={() => {
+              if (confirm("Excluir este formulário e todas as respostas?")) start(() => deleteFormAction(id));
+            }}
+          >
+            Excluir formulário
+          </button>
+        </div>
+      ) : (
+        <p className="mt-14 text-sm text-gray-500">Excluir respostas ou o formulário: só administradores.</p>
+      )}
 
       {shareOpen && (
         <Modal title="Compartilhamento" onClose={() => setShareOpen(false)}>

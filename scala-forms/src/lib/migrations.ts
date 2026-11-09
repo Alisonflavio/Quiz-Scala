@@ -168,6 +168,28 @@ export const MIGRATIONS: Migration[] = [
       }
     },
   },
+  {
+    // Histórico de versões publicadas: cada "Publicar" guarda uma cópia, com quem publicou. Permite voltar
+    // uma versão quando uma publicação quebra o formulário. A versão no ar hoje vira a primeira do histórico.
+    version: "007_historico_de_versoes",
+    up: `
+      CREATE TABLE IF NOT EXISTS form_versions (
+        id           bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+        form_id      text NOT NULL REFERENCES forms(id) ON DELETE CASCADE,
+        title        text NOT NULL,
+        doc          jsonb NOT NULL,
+        published_by text REFERENCES users(id) ON DELETE SET NULL,
+        note         text,
+        published_at timestamptz NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS form_versions_form_idx ON form_versions(form_id, published_at DESC);
+      CREATE INDEX IF NOT EXISTS form_versions_published_by_idx ON form_versions(published_by);
+      ALTER TABLE form_versions ENABLE ROW LEVEL SECURITY;
+      INSERT INTO form_versions (form_id, title, doc, note, published_at)
+        SELECT id, title, published, 'versão no ar quando o histórico foi criado', coalesce(published_at, now())
+        FROM forms WHERE published IS NOT NULL
+    `,
+  },
 ];
 
 /** Divide um bloco SQL em comandos (as migrações não usam ";" dentro de textos). */

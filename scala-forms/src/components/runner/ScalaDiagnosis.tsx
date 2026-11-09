@@ -383,6 +383,9 @@ type Props = {
  * 1. O problema: veredito concreto + a dor com os números da pessoa + "isso tem solução"
  * 2. A solução: entregáveis, prova social (vídeo) e conversa com o especialista
  */
+/** Espera antes de trocar de página, para os eventos (Meta, servidor) não se perderem. */
+const NAV_DELAY_MS = 300;
+
 export default function ScalaDiagnosis({ doc, field, vars: initialVars, utm, responseId, formId, preview }: Props) {
   const t = doc.theme;
   const acc = t.buttonColor;
@@ -653,7 +656,8 @@ export default function ScalaDiagnosis({ doc, field, vars: initialVars, utm, res
           if (!preview) trackEvent(doc.settings, "DiagnosticoConfirmado", true);
           const thankYou = (cfg.thankYouUrl || "/obrigado").trim();
           if (preview || thankYou === "inline") go("solution");
-          else irParaObrigado(thankYou, vars, utm, { responseId, formId });
+          // pequena espera para o evento da Meta e o registro do clique saírem antes da troca de página
+          else setTimeout(() => irParaObrigado(thankYou, vars, utm, { responseId, formId }), NAV_DELAY_MS);
         }}
         className="w-full px-5 py-4 text-lg font-bold shadow-lg"
         style={btn}

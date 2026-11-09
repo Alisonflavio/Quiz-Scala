@@ -1,15 +1,16 @@
 import { notFound } from "next/navigation";
 import OptionsForm from "@/components/options/OptionsForm";
 import SettingsShell from "@/components/options/SettingsShell";
+import VersionHistory from "@/components/options/VersionHistory";
 import { requireUser } from "@/lib/auth";
-import { getForm } from "@/lib/forms";
+import { getForm, listVersions } from "@/lib/forms";
 
 export const dynamic = "force-dynamic";
 
 export default async function OptionsPage(props: PageProps<"/dash/forms/[id]/options">) {
-  await requireUser();
+  const user = await requireUser();
   const { id } = await props.params;
-  const f = await getForm(id);
+  const [f, versions] = await Promise.all([getForm(id), listVersions(id)]);
   if (!f) notFound();
   return (
     <SettingsShell
@@ -19,7 +20,8 @@ export default async function OptionsPage(props: PageProps<"/dash/forms/[id]/opt
       initialSettings={f.draft.settings}
       active="options"
     >
-      <OptionsForm id={id} fields={f.draft.fields} />
+      <OptionsForm id={id} fields={f.draft.fields} isAdmin={user.role === "admin"} />
+      <VersionHistory formId={id} versions={versions} />
     </SettingsShell>
   );
 }

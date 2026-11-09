@@ -201,35 +201,17 @@ export function scoreLevel(score: number): { label: string; color: string } {
 /** Ids que a página de obrigado usa para registrar os próprios eventos (vídeo, telefone corrigido, fim). */
 export type ObrigadoIds = { responseId?: string; formId?: string };
 
-/** Monta a URL da página de obrigado com os dados do diagnóstico na query. */
-export function buildObrigadoUrl(
-  base: string,
-  vars: Record<string, string>,
-  utm: Record<string, string> = {},
-  result: ScalaResult | null = null,
-  ids: ObrigadoIds = {},
-): string {
+/**
+ * Monta a URL da página de obrigado. Só vão na URL os ids (para a página registrar eventos) e as UTMs:
+ * nome, telefone, e-mail e renda ficam fora da URL (histórico do navegador, logs e analytics guardam URLs)
+ * e chegam à página pelo sessionStorage (ver `irParaObrigado`).
+ */
+export function buildObrigadoUrl(base: string, utm: Record<string, string> = {}, ids: ObrigadoIds = {}): string {
   const url = new URL(base, typeof window !== "undefined" ? window.location.origin : "https://localhost");
-  const renda = result?.renda ?? (Number(vars.renda) || 0);
-  const aumento = result?.aumento ?? (Number(vars.aumento) || 0);
-  const meta = result?.meta ?? (renda && aumento ? renda + aumento : 0);
-  const set = (k: string, v: string | number | undefined | null) => {
+  const set = (k: string, v: string | undefined | null) => {
     if (v == null || String(v).trim() === "") return;
     url.searchParams.set(k, String(v).trim());
   };
-  set("nome", vars.nome);
-  set("whatsapp", vars.whatsapp || vars.telefone);
-  set("telefone", vars.whatsapp || vars.telefone);
-  set("email", vars.email);
-  set("insta", vars.insta);
-  if (renda) set("renda", String(renda));
-  if (renda) set("fatura", String(renda));
-  if (aumento) set("aumento", String(aumento));
-  if (meta) set("meta", String(meta));
-  if (vars.horas) set("horas", vars.horas);
-  if (result?.label) set("diagnostico", result.label);
-  if (result?.diagnosis?.area) set("area", result.diagnosis.area);
-  if (result?.diagnosis?.gargalo) set("gargalo", result.diagnosis.gargalo);
   set("rid", ids.responseId);
   set("fid", ids.formId);
   for (const [k, v] of Object.entries(utm)) set(k, v);
@@ -240,7 +222,7 @@ export function buildObrigadoUrl(
   return url.toString();
 }
 
-/** Guarda os dados na sessão (backup) e leva a pessoa para a página de obrigado. */
+/** Guarda os dados da pessoa no sessionStorage (a página de obrigado lê dali) e leva para a página de obrigado. */
 export function irParaObrigado(
   base: string,
   vars: Record<string, string>,
@@ -248,7 +230,7 @@ export function irParaObrigado(
   ids: ObrigadoIds = {},
 ): void {
   const result = computeScala(vars);
-  const dest = buildObrigadoUrl(base, vars, utm, result, ids);
+  const dest = buildObrigadoUrl(base, utm, ids);
   try {
     const renda = result?.renda ?? (Number(vars.renda) || 0);
     const aumento = result?.aumento ?? (Number(vars.aumento) || 0);

@@ -3,7 +3,16 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSession, createUser, hashPassword, requireAdmin, requireUser } from "@/lib/auth";
 import { query } from "@/lib/db";
-import { createForm, deleteForm, deleteResponses, duplicateForm, getForm, publishForm, saveDraft } from "@/lib/forms";
+import {
+  createForm,
+  deleteForm,
+  deleteResponses,
+  duplicateForm,
+  getForm,
+  publishForm,
+  restoreVersion,
+  saveDraft,
+} from "@/lib/forms";
 import { deleteResponse, dispatchIntegrations, getResponse, setManualTemperature } from "@/lib/responses";
 import { missingKeysMessage, missingRequiredKeys } from "@/lib/required-keys";
 import { blankForm, scalaTemplate } from "@/lib/templates";
@@ -27,14 +36,22 @@ export async function saveDraftAction(id: string, title: string, doc: FormDoc) {
 }
 
 export async function publishAction(id: string, title: string, doc: FormDoc): Promise<{ ok: boolean; error?: string }> {
-  await requireUser();
+  const u = await requireUser();
   await saveDraft(id, title.slice(0, 60) || "Sem título", doc);
   // a versão no ar não muda se faltar variável que o diagnóstico ou o Make usam
   const missing = missingRequiredKeys(doc);
   if (missing.length) return { ok: false, error: missingKeysMessage(missing) };
-  await publishForm(id);
+  await publishForm(id, u.id);
   revalidatePath(`/f/${id}`);
   return { ok: true };
+}
+
+/** Volta o formulário para uma versão publicada anterior (fica registrado no histórico). */
+export async function restoreVersionAction(formId: string, versionId: number) {
+  const u = await requireUser();
+  await restoreVersion(formId, versionId, u.id);
+  revalidatePath(`/f/${formId}`);
+  revalidatePath(`/dash/forms/${formId}/options`);
 }
 
 /** Opções e integrações valem na hora: gravam no rascunho e na versão publicada (as perguntas continuam dependendo de "Publicar") */
@@ -62,14 +79,16 @@ export async function duplicateFormAction(id: string) {
   revalidatePath("/dash");
 }
 
+/** Só admin: apagar formulário leva junto todas as respostas e não tem volta. */
 export async function deleteFormAction(id: string) {
-  await requireUser();
+  await requireAdmin();
   await deleteForm(id);
   redirect("/dash");
 }
 
+/** Só admin: apagar todas as respostas não tem volta. */
 export async function deleteAllResponsesAction(id: string) {
-  await requireUser();
+  await requireAdmin();
   await deleteResponses(id);
   revalidatePath(`/dash/forms/${id}/responses`);
 }
