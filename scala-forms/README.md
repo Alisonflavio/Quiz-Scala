@@ -23,13 +23,14 @@ Abra http://localhost:3000. No primeiro acesso aparece a tela para criar o admin
 
 ## Scripts
 
-| Comando                           | O que faz                                           |
-| --------------------------------- | --------------------------------------------------- |
-| `npm run dev`                     | Servidor de desenvolvimento                         |
-| `npm run build`                   | Build de produção                                   |
-| `npm test`                        | Testes (Vitest) em `tests/`, espelhando `src/`      |
-| `npm run typecheck`               | Gera os tipos de rota do Next e roda `tsc --noEmit` |
-| `npm run lint`                    | ESLint                                              |
-| `npm run format` / `format:check` | Prettier (escreve / só confere)                     |
+| Comando                           | O que faz                                                                                                                       |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`                     | Servidor de desenvolvimento                                                                                                     |
+| `npm run build`                   | Build de produção                                                                                                               |
+| `npm test`                        | Testes (Vitest) em `tests/`, espelhando `src/`                                                                                  |
+| `npm run typecheck`               | Gera os tipos de rota do Next e roda `tsc --noEmit`                                                                             |
+| `npm run lint`                    | ESLint                                                                                                                          |
+| `npm run format` / `format:check` | Prettier (escreve / só confere)                                                                                                 |
+| `npm run e2e`                     | Teste ponta a ponta do Diagnóstico no navegador (com `npm run dev` rodando e banco de teste; ver `scripts/e2e-diagnostico.mjs`) |
 
-Antes de publicar: `npm test && npm run typecheck && npm run lint && npm run build`. Como publicar: [docs/deploy.md](docs/deploy.md).
+Antes de publicar: `npm test && npm run typecheck && npm run lint && npm run build`. O GitHub Actions (`.github/workflows/ci.yml`) roda essas verificações a cada push e pull request. Como publicar: [docs/deploy.md](docs/deploy.md).

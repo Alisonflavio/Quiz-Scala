@@ -1,0 +1,27 @@
+# Confere o app a cada push e pull request: testes, tipos, lint, formatação e build.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  scala-forms:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: scala-forms
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: scala-forms/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run build

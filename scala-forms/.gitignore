@@ -44,3 +44,6 @@ next-env.d.ts
 /.data/
 .env*
 !.env.example
+
+# senha do admin de teste do e2e
+.e2e-senha

@@ -10,7 +10,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "e2e": "node scripts/e2e-diagnostico.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.8",
