@@ -15,6 +15,7 @@ vi.mock("@/lib/rate-limit", () => ({ rateLimit: async () => true, clientIp: () =
 vi.mock("@/lib/responses", () => ({
   getResponse: async () => resposta,
   dispatchIntegrations: dispatch,
+  refreshLeadColumns: async () => {},
 }));
 vi.mock("@/lib/db", () => ({ json: JSON.stringify, query }));
 // fora de uma requisição real o `after` do Next não existe: aqui ele roda a tarefa na hora

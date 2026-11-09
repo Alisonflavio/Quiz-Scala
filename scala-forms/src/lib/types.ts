@@ -181,6 +181,13 @@ export type ResponseRow = {
   created_at: string | Date;
   updated_at: string | Date;
   completed_at: string | Date | null;
+  /** Colunas do lead e do diagnóstico (migração 004), calculadas em lead.ts */
+  lead_name?: string | null;
+  lead_email?: string | null;
+  lead_phone?: string | null;
+  diag_area?: string | null;
+  diag_bottleneck?: string | null;
+  diag_career_score?: number | null;
 };
 
 /** Resposta de um campo: texto, ou lista de ids de opções (múltipla escolha) + texto livre de "outros" */

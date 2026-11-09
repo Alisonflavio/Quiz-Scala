@@ -2,7 +2,7 @@ import { NextResponse, after } from "next/server";
 import { json, query } from "@/lib/db";
 import { getForm } from "@/lib/forms";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
-import { dispatchIntegrations, getResponse } from "@/lib/responses";
+import { dispatchIntegrations, getResponse, refreshLeadColumns } from "@/lib/responses";
 
 const MAX_EVENTS_PER_RESPONSE = 100;
 
@@ -70,11 +70,13 @@ export async function POST(req: Request, ctx: RouteContext<"/api/f/[id]/event">)
     "UPDATE responses SET meta = jsonb_set(meta || $3::jsonb, '{events}', coalesce(meta->'events', '[]'::jsonb) || $2::jsonb), updated_at = now() WHERE id = $1",
     [r.id, json([ev]), json(patch)],
   );
+  // correção de renda/horas ou de telefone muda as colunas do lead e do diagnóstico
+  if (Object.keys(patch).length > 0) await refreshLeadColumns(form.published, r.id);
   const updated = await getResponse(r.id);
   if (updated && !isProgress(body.event)) {
     const doc = form.published;
-    const ev = body.event;
-    after(() => dispatchIntegrations(doc, updated, form.title, ev));
+    const nome = body.event;
+    after(() => dispatchIntegrations(doc, updated, form.title, nome));
   }
   return NextResponse.json({ ok: true });
 }

@@ -6,25 +6,80 @@ import { json, query, queryOne } from "./db";
 import { answerText, answerValue, computeScore, temperatureFor, variables } from "./engine";
 import { respondiPayload } from "./respondi";
 import { safePostJson } from "./safe-fetch";
+import { LEAD_COLUMN_NAMES, leadColumns, leadValues } from "./lead";
 import { computeScala } from "./scala";
 import type { AnswerValue, FormDoc, ResponseRow, Temperature } from "./types";
 
-/** Lista respostas do formulário, mais recentes primeiro. `q` busca texto em qualquer resposta; `temp` usa a temperatura manual quando existe. */
-export async function listResponses(formId: string, f: { status?: string; temp?: string; q?: string } = {}) {
-  const rows = await query<ResponseRow>(
+/** Tentativas de gravar uma resposta nova quando outra pegou o mesmo número ao mesmo tempo. */
+const NUMBER_ATTEMPTS = 5;
+
+/** `true` se o erro do Postgres é de valor repetido em índice único (código 23505). */
+function isUniqueViolation(err: unknown) {
+  return typeof err === "object" && err !== null && (err as { code?: string }).code === "23505";
+}
+
+export type ResponseFilters = { status?: string; temp?: string; q?: string };
+
+/** Escapa `%`, `_` e `\` para a busca com ILIKE tratar o texto digitado literalmente. */
+const likeEscape = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
+
+/**
+ * Lista respostas do formulário, mais recentes primeiro. Filtro e busca rodam no banco.
+ * `q` procura em nome, e-mail, telefone e em qualquer resposta; `temp` usa a temperatura manual quando existe.
+ * Sem `limit`, devolve todas (exportação).
+ */
+export async function listResponses(
+  formId: string,
+  f: ResponseFilters = {},
+  page: { limit?: number; offset?: number } = {},
+) {
+  const q = (f.q ?? "").trim();
+  const digits = q.replace(/\D/g, "");
+  return query<ResponseRow>(
     `SELECT * FROM responses WHERE form_id = $1
        AND ($2 = '' OR status = $2)
        AND ($3 = '' OR coalesce(temperature_manual, temperature) = $3)
-     ORDER BY number DESC`,
-    [formId, f.status ?? "", f.temp ?? ""],
+       AND ($4 = '' OR lead_name ILIKE $4 OR lead_email ILIKE $4 OR answers::text ILIKE $4
+            OR ($5 <> '' AND lead_phone LIKE $5))
+     ORDER BY number DESC
+     LIMIT $6 OFFSET $7`,
+    [
+      formId,
+      f.status ?? "",
+      f.temp ?? "",
+      q ? `%${likeEscape(q)}%` : "",
+      digits.length >= 4 ? `%${digits}%` : "",
+      page.limit ?? null,
+      page.offset ?? 0,
+    ],
   );
-  const q = (f.q ?? "").trim().toLowerCase();
-  if (!q) return rows;
-  return rows.filter((r) => JSON.stringify(r.answers).toLowerCase().includes(q));
+}
+
+/** Quantas respostas batem com os filtros (para a paginação do painel). */
+export async function countResponses(formId: string, f: ResponseFilters = {}) {
+  const q = (f.q ?? "").trim();
+  const digits = q.replace(/\D/g, "");
+  const row = await queryOne<{ n: number }>(
+    `SELECT count(*)::int AS n FROM responses WHERE form_id = $1
+       AND ($2 = '' OR status = $2)
+       AND ($3 = '' OR coalesce(temperature_manual, temperature) = $3)
+       AND ($4 = '' OR lead_name ILIKE $4 OR lead_email ILIKE $4 OR answers::text ILIKE $4
+            OR ($5 <> '' AND lead_phone LIKE $5))`,
+    [formId, f.status ?? "", f.temp ?? "", q ? `%${likeEscape(q)}%` : "", digits.length >= 4 ? `%${digits}%` : ""],
+  );
+  return row?.n ?? 0;
 }
 
 export async function getResponse(id: string) {
   return queryOne<ResponseRow>("SELECT * FROM responses WHERE id = $1", [id]);
+}
+
+/** Recalcula as colunas do lead e do diagnóstico a partir do que está salvo (após correções). */
+export async function refreshLeadColumns(doc: FormDoc, id: string) {
+  const r = await getResponse(id);
+  if (!r) return;
+  const sets = LEAD_COLUMN_NAMES.map((c, i) => `${c} = $${i + 2}`).join(", ");
+  await query(`UPDATE responses SET ${sets} WHERE id = $1`, [id, ...leadValues(leadColumns(doc, r.answers, r.meta))]);
 }
 
 export async function setManualTemperature(id: string, t: Temperature | null) {
@@ -100,33 +155,47 @@ export async function saveResponse(formId: string, formTitle: string, doc: FormD
 
   if (!row) {
     const id = nanoid(16);
-    // número sequencial por formulário (como "179. Luana" no Respondi)
-    row = await queryOne<ResponseRow>(
-      `INSERT INTO responses (id, form_id, number, status, answers, score, temperature, ending_id, utm, meta, completed_at)
-       VALUES ($1, $2, (SELECT coalesce(max(number),0)+1 FROM responses WHERE form_id = $2),
-               $3, $4::jsonb, $5, $6, $7, $8::jsonb, $9::jsonb, CASE WHEN $3 = 'complete' THEN now() END)
-       RETURNING *`,
-      [
-        id,
-        formId,
-        input.complete ? "complete" : "partial",
-        json(input.answers),
-        score,
-        temperature,
-        input.endingId ?? null,
-        json(input.utm ?? {}),
-        json(input.meta ?? {}),
-      ],
-    );
+    const lead = leadValues(leadColumns(doc, input.answers, input.meta));
+    // número sequencial por formulário (como "179. Luana" no Respondi). O índice único (form_id, number)
+    // barra número repetido; se duas pessoas terminarem juntas, quem perder a corrida tenta com o próximo.
+    for (let attempt = 1; ; attempt++) {
+      try {
+        row = await queryOne<ResponseRow>(
+          `INSERT INTO responses (id, form_id, number, status, answers, score, temperature, ending_id, utm, meta, completed_at,
+             ${LEAD_COLUMN_NAMES.join(", ")})
+           VALUES ($1, $2, (SELECT coalesce(max(number),0)+1 FROM responses WHERE form_id = $2),
+                   $3, $4::jsonb, $5, $6, $7, $8::jsonb, $9::jsonb, CASE WHEN $3 = 'complete' THEN now() END,
+                   $10, $11, $12, $13, $14, $15)
+           RETURNING *`,
+          [
+            id,
+            formId,
+            input.complete ? "complete" : "partial",
+            json(input.answers),
+            score,
+            temperature,
+            input.endingId ?? null,
+            json(input.utm ?? {}),
+            json(input.meta ?? {}),
+            ...lead,
+          ],
+        );
+        break;
+      } catch (err) {
+        if (!isUniqueViolation(err) || attempt >= NUMBER_ATTEMPTS) throw err;
+      }
+    }
   } else {
+    const lead = leadValues(leadColumns(doc, input.answers, row.meta));
     row = await queryOne<ResponseRow>(
       `UPDATE responses SET answers = $2::jsonb, score = $3, temperature = $4,
          status = CASE WHEN status = 'complete' OR $5 THEN 'complete' ELSE 'partial' END,
          ending_id = coalesce($6, ending_id),
          completed_at = CASE WHEN completed_at IS NULL AND $5 THEN now() ELSE completed_at END,
+         ${LEAD_COLUMN_NAMES.map((c, i) => `${c} = $${i + 7}`).join(", ")},
          updated_at = now()
        WHERE id = $1 RETURNING *`,
-      [row.id, json(input.answers), score, temperature, input.complete, input.endingId ?? null],
+      [row.id, json(input.answers), score, temperature, input.complete, input.endingId ?? null, ...lead],
     );
   }
   if (!row) throw new Error("Falha ao salvar resposta");

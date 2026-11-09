@@ -12,10 +12,13 @@ import {
 import { requireUser } from "@/lib/auth";
 import { answerText } from "@/lib/engine";
 import { getForm } from "@/lib/forms";
-import { flatten, listResponses } from "@/lib/responses";
+import { countResponses, flatten, listResponses } from "@/lib/responses";
 import type { ResponseRow } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+
+/** Respostas por página na lista e na tabela. */
+const PAGE_SIZE = 50;
 
 const fmt = (d: string | Date | null) =>
   d
@@ -37,14 +40,26 @@ export default async function ResponsesPage(props: PageProps<"/dash/forms/[id]/r
   if (!form) notFound();
   const doc = form.published ?? form.draft;
   const filters = { status: sp.status ?? "", temp: sp.temp ?? "", q: sp.q ?? "" };
-  const rows = await listResponses(id, filters);
+  const page = Math.max(1, Math.floor(Number(sp.page)) || 1);
+  const [rows, total] = await Promise.all([
+    listResponses(id, filters, { limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE }),
+    countResponses(id, filters),
+  ]);
+  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const table = sp.table === "1";
   const nameField = doc.fields.find((f) => f.type === "name") ?? doc.fields.find((f) => f.type === "email");
   const displayName = (r: ResponseRow) =>
     (nameField ? answerText(nameField, r.answers[nameField.id]) : "") || "Anônimo";
   const qs = (p: Record<string, string | undefined>) => {
     const u = new URLSearchParams();
-    for (const [k, v] of Object.entries({ ...filters, table: table ? "1" : "", sel: sp.sel, ...p })) if (v) u.set(k, v);
+    for (const [k, v] of Object.entries({
+      ...filters,
+      table: table ? "1" : "",
+      page: page > 1 ? String(page) : "",
+      sel: sp.sel,
+      ...p,
+    }))
+      if (v) u.set(k, v);
     const s = u.toString();
     return s ? `?${s}` : "";
   };
@@ -54,6 +69,27 @@ export default async function ResponsesPage(props: PageProps<"/dash/forms/[id]/r
   );
   const sel = rows[idx];
   const exportQs = new URLSearchParams(Object.entries(filters).filter(([, v]) => v) as [string, string][]).toString();
+
+  const pager =
+    pages > 1 ? (
+      <nav className="flex items-center justify-between gap-3 px-6 py-4 text-sm text-gray-600" aria-label="Páginas">
+        <Link
+          href={qs({ page: String(page - 1), sel: "" })}
+          className={page > 1 ? "hover:text-brand" : "pointer-events-none text-gray-300"}
+        >
+          ← Anteriores
+        </Link>
+        <span>
+          Página {page} de {pages}
+        </span>
+        <Link
+          href={qs({ page: String(page + 1), sel: "" })}
+          className={page < pages ? "hover:text-brand" : "pointer-events-none text-gray-300"}
+        >
+          Próximas →
+        </Link>
+      </nav>
+    ) : null;
 
   const toolbar = (
     <>
@@ -119,7 +155,7 @@ export default async function ResponsesPage(props: PageProps<"/dash/forms/[id]/r
       <>
         <FormHeader id={id} title={form.title} active="responses" right={toolbar} />
         <div className="overflow-auto p-6">
-          <div className="mb-4 text-2xl text-gray-800">{rows.length} respostas.</div>
+          <div className="mb-4 text-2xl text-gray-800">{total} respostas.</div>
           <table className="min-w-full border-collapse text-sm">
             <thead>
               <tr>
@@ -145,6 +181,7 @@ export default async function ResponsesPage(props: PageProps<"/dash/forms/[id]/r
               ))}
             </tbody>
           </table>
+          {pager}
         </div>
       </>
     );
@@ -155,7 +192,7 @@ export default async function ResponsesPage(props: PageProps<"/dash/forms/[id]/r
       <FormHeader id={id} title={form.title} active="responses" right={toolbar} />
       <div className="flex flex-col lg:h-[calc(100vh-5rem)] lg:flex-row">
         <aside className="max-h-80 w-full shrink-0 overflow-y-auto border-b border-gray-200 lg:max-h-none lg:w-[360px] lg:border-b-0 lg:border-r xl:w-[500px]">
-          <div className="border-b-4 border-gray-100 px-6 py-5 text-3xl text-gray-800">{rows.length} respostas.</div>
+          <div className="border-b-4 border-gray-100 px-6 py-5 text-3xl text-gray-800">{total} respostas.</div>
           {rows.length === 0 && (
             <p className="p-6 text-gray-500">
               Nenhuma resposta {filters.status || filters.temp || filters.q ? "com esses filtros" : "ainda"}.
@@ -177,6 +214,7 @@ export default async function ResponsesPage(props: PageProps<"/dash/forms/[id]/r
               <TempBadge t={r.temperature_manual ?? r.temperature} />
             </Link>
           ))}
+          {pager}
         </aside>
 
         <section className="min-w-0 flex-1 bg-slate-100 px-3 py-6 sm:px-6 sm:py-10 lg:overflow-y-auto print:bg-white">
