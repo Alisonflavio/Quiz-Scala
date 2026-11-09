@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { createSession, createUser, hashPassword, requireAdmin, requireUser } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { createForm, deleteForm, deleteResponses, duplicateForm, getForm, publishForm, saveDraft } from "@/lib/forms";
-import { deleteResponse, setManualTemperature } from "@/lib/responses";
+import { deleteResponse, dispatchIntegrations, getResponse, setManualTemperature } from "@/lib/responses";
 import { blankForm, scalaTemplate } from "@/lib/templates";
 import type { FormDoc, Settings, Temperature, Theme } from "@/lib/types";
 import { json } from "@/lib/db";
@@ -80,6 +80,15 @@ export async function setTemperatureAction(formId: string, responseId: string, t
 export async function deleteResponseAction(formId: string, responseId: string) {
   await requireUser();
   await deleteResponse(responseId);
+  revalidatePath(`/dash/forms/${formId}/responses`);
+}
+
+/** Reenvia uma resposta completa ao webhook/planilha (ex.: o Make estava fora do ar). O resultado entra no histórico de envios. */
+export async function resendIntegrationsAction(formId: string, responseId: string) {
+  await requireUser();
+  const [form, r] = await Promise.all([getForm(formId), getResponse(responseId)]);
+  if (!form?.published || !r || r.form_id !== formId || r.status !== "complete") return;
+  await dispatchIntegrations(form.published, r, form.title, "completa");
   revalidatePath(`/dash/forms/${formId}/responses`);
 }
 

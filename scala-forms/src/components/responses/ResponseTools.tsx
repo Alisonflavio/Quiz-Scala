@@ -1,6 +1,6 @@
 "use client";
 import { useTransition } from "react";
-import { deleteResponseAction, setTemperatureAction } from "@/app/dash/actions";
+import { deleteResponseAction, resendIntegrationsAction, setTemperatureAction } from "@/app/dash/actions";
 import type { Temperature } from "@/lib/types";
 
 const TEMP_STYLE: Record<Temperature, string> = {
@@ -44,6 +44,20 @@ export function TemperaturePicker({
         <option value="quente">{TEMP_LABEL.quente} (manual)</option>
       </select>
     </div>
+  );
+}
+
+/* Reenvia a resposta ao webhook/planilha; o resultado aparece no histórico de envios */
+export function ResendIntegrations({ formId, responseId }: { formId: string; responseId: string }) {
+  const [pending, start] = useTransition();
+  return (
+    <button
+      disabled={pending}
+      onClick={() => start(() => resendIntegrationsAction(formId, responseId))}
+      className="mt-3 rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+    >
+      {pending ? "Reenviando..." : "Reenviar para integrações"}
+    </button>
   );
 }
 

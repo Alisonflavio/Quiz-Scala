@@ -1,6 +1,7 @@
 /* Respostas dos formulários: gravação (parcial/completa), consulta com filtros e disparo de webhook/planilha. */
 import "server-only";
 import { nanoid } from "nanoid";
+import { after } from "next/server";
 import { json, query, queryOne } from "./db";
 import { answerText, answerValue, computeScore, temperatureFor, variables } from "./engine";
 import { respondiPayload } from "./respondi";
@@ -133,18 +134,35 @@ export async function saveResponse(formId: string, formTitle: string, doc: FormD
   const justCompleted = input.complete && !wasComplete;
   const trigger = doc.settings.integrationsTrigger;
   if (justCompleted || (trigger === "all" && !input.complete)) {
-    await dispatchIntegrations(doc, row, formTitle, justCompleted ? "completa" : "parcial");
+    // o envio às integrações roda depois da resposta: a pessoa não espera o Make/planilha responder
+    const saved = row;
+    after(() => dispatchIntegrations(doc, saved, formTitle, justCompleted ? "completa" : "parcial"));
   }
   return row;
 }
 
+/** Tentativas de envio a webhook/planilha e espera entre elas (ms). */
+const POST_ATTEMPTS = 3;
+const POST_RETRY_MS = [0, 2000, 6000];
+const POST_TIMEOUT_MS = 8000;
+
+/**
+ * POST com novas tentativas para falhas passageiras (rede, timeout, HTTP 429 e 5xx).
+ * Erros 4xx (exceto 429) não são repetidos: o destino recusou o conteúdo e repetir não resolve.
+ */
 async function post(url: string, body: unknown) {
-  try {
-    const res = await safePostJson(url, body, 8000);
-    return { ok: res.ok, status: res.status };
-  } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  let last: { ok: boolean; status?: number; error?: string } = { ok: false };
+  for (let i = 0; i < POST_ATTEMPTS; i++) {
+    if (POST_RETRY_MS[i]) await new Promise((res) => setTimeout(res, POST_RETRY_MS[i]));
+    try {
+      const res = await safePostJson(url, body, POST_TIMEOUT_MS);
+      last = { ok: res.ok, status: res.status };
+      if (res.ok || (res.status < 500 && res.status !== 429)) return last;
+    } catch (e) {
+      last = { ok: false, error: e instanceof Error ? e.message : String(e) };
+    }
   }
+  return last;
 }
 
 /**

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { json, query } from "@/lib/db";
 import { getForm } from "@/lib/forms";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
@@ -71,7 +71,10 @@ export async function POST(req: Request, ctx: RouteContext<"/api/f/[id]/event">)
     [r.id, json([ev]), json(patch)],
   );
   const updated = await getResponse(r.id);
-  if (updated && !isProgress(body.event))
-    await dispatchIntegrations(form.published, updated, form.title, body.event);
+  if (updated && !isProgress(body.event)) {
+    const doc = form.published;
+    const ev = body.event;
+    after(() => dispatchIntegrations(doc, updated, form.title, ev));
+  }
   return NextResponse.json({ ok: true });
 }

@@ -5,6 +5,7 @@ import {
   CopyLink,
   DeleteResponse,
   PrintButton,
+  ResendIntegrations,
   TempBadge,
   TemperaturePicker,
 } from "@/components/responses/ResponseTools";
@@ -308,14 +309,19 @@ export default async function ResponsesPage(props: PageProps<"/dash/forms/[id]/r
                 </dl>
               </div>
 
-              {sel.webhook_log?.length > 0 && (
-                <div className="border-t border-gray-200 px-7 py-6 text-sm">
+              {(sel.webhook_log?.length > 0 || sel.status === "complete") && (
+                <div className="border-t border-gray-200 px-7 py-6 text-sm print:hidden">
                   <div className="mb-2 font-semibold text-gray-700">Envios para integrações</div>
-                  {sel.webhook_log.map((l, i) => (
-                    <div key={i} className={l.ok ? "text-emerald-300" : "text-rose-400"}>
-                      {l.ok ? "✓" : "✕"} {l.target} · {fmt(l.at)} {l.status ? `· HTTP ${l.status}` : ""} {l.error ?? ""}
-                    </div>
-                  ))}
+                  {sel.webhook_log?.length ? (
+                    sel.webhook_log.map((l, i) => (
+                      <div key={i} className={l.ok ? "text-emerald-300" : "text-rose-400"}>
+                        {l.ok ? "✓" : "✕"} {l.target} · {fmt(l.at)} {l.status ? `· HTTP ${l.status}` : ""} {l.error ?? ""}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-gray-500">Nenhum envio registrado.</div>
+                  )}
+                  {sel.status === "complete" && <ResendIntegrations formId={id} responseId={sel.id} />}
                 </div>
               )}
               <div className="border-t border-gray-200 px-7 py-4 print:hidden">

@@ -17,6 +17,11 @@ vi.mock("@/lib/responses", () => ({
   dispatchIntegrations: dispatch,
 }));
 vi.mock("@/lib/db", () => ({ json: JSON.stringify, query }));
+// fora de uma requisição real o `after` do Next não existe: aqui ele roda a tarefa na hora
+vi.mock("next/server", async (orig) => ({
+  ...(await orig<typeof import("next/server")>()),
+  after: (fn: () => unknown) => void fn(),
+}));
 
 const send = async (body: unknown) => {
   const { POST } = await import("@/app/api/f/[id]/event/route");
